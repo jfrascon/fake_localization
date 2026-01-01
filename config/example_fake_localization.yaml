@@ -1,0 +1,15 @@
+/**/fake_localization:
+  ros__parameters:
+    # These parameters can also be set through the launch file and if so, they have precedence over these defined in
+    # the YAML file.
+    global_frame: map
+    odometry_frame: $(var robot_prefix)odom
+    base_frame: $(var robot_prefix)base_link
+    # Parameters (delta_x, delta_y, delta_yaw) represent the position and orientation of the <global_frame> w.r.t the
+    # simulator's global frame. It might happen that both frames do not coincide, although they usually do, and in
+    # that case (delta_x = 0.0, delta_y = 0.0, delta_yaw = 0.0).
+    delta_x: 0.0
+    delta_y: 0.0
+    delta_yaw: 0.0
+    # Tolerance for considering transforms as up-to-date.
+    transform_tolerance: 0.1
