@@ -9,7 +9,7 @@
 #   (e.g., https://<server>/<repository_path>).
 #
 repositories:
-    ros2_launch_helpers
+    ros2_launch_helpers:
         type: git
         url: https://github.com/jfrascon/ros2_launch_helpers.git
         version: main
