@@ -1,7 +1,9 @@
-# Parameters using `$(var ...)` takes their value from the launch context.
 /**/fake_localization:
   ros__parameters:
-    use_sim_time: $(var use_sim_time)
+    # The launch file always overrides this parameter with the `use_sim_time`
+    # launch argument. This value is kept only to make this YAML file complete
+    # when it is inspected outside the launch context.
+    use_sim_time: false
     global_frame: map
     odometry_frame: robot_odom
     base_frame: robot_base_link

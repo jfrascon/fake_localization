@@ -1,9 +1,7 @@
-import os
-from pathlib import Path  # There is no need to set the keys `namespace`, `params_file`, `use_sim_time`,
+from pathlib import Path
 from typing import Any, List
 
 import ros2_launch_helpers as rlh
-from ament_index_python.packages import get_package_share_directory
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -16,27 +14,25 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument('namespace', default_value='robot', description='namespace'),
-            DeclareLaunchArgument(
-                'params_file',
-                default_value=os.path.join(
-                    get_package_share_directory('fake_localization'), 'config', 'example_fake_localization.yaml'
-                ),
-                description='YAML file with node parameters',
-            ),
+            DeclareLaunchArgument('params_file', default_value='', description='YAML file with node parameters'),
             DeclareLaunchArgument(
                 'use_sim_time',
                 default_value='False',
                 choices=['True', 'true', 'False', 'false'],
                 description='Use simulation clock if true',
             ),
-            DeclareLaunchArgument('global_frame', default_value='', description='Global frame'),
-            DeclareLaunchArgument('odometry_frame', default_value='', description='Odometry frame for the robot'),
-            DeclareLaunchArgument('base_frame', default_value='', description='Base frame name for the robot'),
-            DeclareLaunchArgument('delta_x', default_value='', description='Offset in x'),
-            DeclareLaunchArgument('delta_y', default_value='', description='Offset in y'),
-            DeclareLaunchArgument('delta_yaw', default_value='', description='Offset in yaw'),
+            DeclareLaunchArgument('global_frame', default_value='map', description='Global frame'),
             DeclareLaunchArgument(
-                'transform_tolerance', default_value='', description='Tolerance to consider transforms as up-to-date'
+                'odometry_frame', default_value='robot_odom', description='Odometry frame for the robot'
+            ),
+            DeclareLaunchArgument(
+                'base_frame', default_value='robot_base_link', description='Base frame name for the robot'
+            ),
+            DeclareLaunchArgument('delta_x', default_value='0.0', description='Offset in x'),
+            DeclareLaunchArgument('delta_y', default_value='0.0', description='Offset in y'),
+            DeclareLaunchArgument('delta_yaw', default_value='0.0', description='Offset in yaw'),
+            DeclareLaunchArgument(
+                'transform_tolerance', default_value='0.1', description='Tolerance to consider transforms as up-to-date'
             ),
             DeclareLaunchArgument('node_remappings', default_value='', description=rlh.REMAPPINGS_DESC),
             DeclareLaunchArgument(
@@ -53,63 +49,56 @@ def generate_launch_description():
 
 
 def launch_fake_localization_node(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
-    # If the params_file exists, load it as a ParameterFile.
-    # If any parameter is also provided to this launch file, it takes precedence over the
-    # params_file.
-    # This allows to override specific parameters in the params_file without having to create a new
-    # params file.
+    # The launch file has two exclusive configuration modes for the node-specific parameters.
+    # If `params_file` is not empty, those parameters come from that file.
+    # If `params_file` is empty, those parameters come from the launch arguments below.
+    # `use_sim_time` is the only exception: it is always taken from its launch argument.
     parameters: List[Any] = []
 
     params_file = LaunchConfiguration('params_file').perform(ctx)
-    global_frame = LaunchConfiguration('global_frame').perform(ctx)
-    odometry_frame = LaunchConfiguration('odometry_frame').perform(ctx)
-    base_frame = LaunchConfiguration('base_frame').perform(ctx)
-    delta_x = LaunchConfiguration('delta_x').perform(ctx)
-    delta_y = LaunchConfiguration('delta_y').perform(ctx)
-    delta_yaw = LaunchConfiguration('delta_yaw').perform(ctx)
-    transform_tolerance = LaunchConfiguration('transform_tolerance').perform(ctx)
 
     if params_file:
         if not Path(params_file).is_file():
             raise FileNotFoundError(f"Params file '{params_file}' does not exist. ")
 
         parameters.append(ParameterFile(params_file, allow_substs=True))
-
-    if global_frame:
-        parameters.append({'global_frame': global_frame})
-
-    if odometry_frame:
-        parameters.append({'odometry_frame': odometry_frame})
-
-    if base_frame:
-        parameters.append({'base_frame': base_frame})
-
-    if delta_x:
+    else:
         try:
-            parameters.append({'delta_x': float(delta_x)})
+            delta_x = float(LaunchConfiguration('delta_x').perform(ctx))
         except ValueError as exc:
-            raise ValueError(f"Invalid value for delta_x: '{delta_x}'. Must be a float.") from exc
+            raise ValueError('Invalid value for delta_x. Must be a float.') from exc
 
-    if delta_y:
         try:
-            parameters.append({'delta_y': float(delta_y)})
+            delta_y = float(LaunchConfiguration('delta_y').perform(ctx))
         except ValueError as exc:
-            raise ValueError(f"Invalid value for delta_y: '{delta_y}'. Must be a float.") from exc
+            raise ValueError('Invalid value for delta_y. Must be a float.') from exc
 
-    if delta_yaw:
         try:
-            parameters.append({'delta_yaw': float(delta_yaw)})
+            delta_yaw = float(LaunchConfiguration('delta_yaw').perform(ctx))
         except ValueError as exc:
-            raise ValueError(f"Invalid value for delta_yaw: '{delta_yaw}'. Must be a float.") from exc
+            raise ValueError('Invalid value for delta_yaw. Must be a float.') from exc
 
-    if transform_tolerance:
         try:
-            parameters.append({'transform_tolerance': float(transform_tolerance)})
+            transform_tolerance = float(LaunchConfiguration('transform_tolerance').perform(ctx))
         except ValueError as exc:
-            raise ValueError(
-                f"Invalid value for transform_tolerance: '{transform_tolerance}'. Must be a float."
-            ) from exc
+            raise ValueError('Invalid value for transform_tolerance. Must be a float.') from exc
 
+        parameters.append(
+            {
+                'global_frame': LaunchConfiguration('global_frame').perform(ctx),
+                'odometry_frame': LaunchConfiguration('odometry_frame').perform(ctx),
+                'base_frame': LaunchConfiguration('base_frame').perform(ctx),
+                'delta_x': delta_x,
+                'delta_y': delta_y,
+                'delta_yaw': delta_yaw,
+                'transform_tolerance': transform_tolerance,
+            }
+        )
+
+    # The `use_sim_time` parameter is always taken from the launch argument, even if a params_file
+    # is provided.
+    # This allows to easily switch between real and simulated time without modifying the params
+    # file.
     parameters.append({'use_sim_time': ParameterValue(LaunchConfiguration('use_sim_time'), value_type=bool)})
 
     # node_options include 'name', 'output', 'emulate_tty', 'respawn', 'respawn_delay',

@@ -1,4 +1,4 @@
-# `fake_localization`
+# [`fake_localization`](https://github.com/jfrascon/fake_localization/tree/ros2)
 
 `fake_localization` provides one localization node that converts simulator ground-truth odometry
 into `amcl`-style outputs. It subscribes to ground-truth odometry, publishes the robot pose and a
@@ -30,18 +30,22 @@ The node broadcasts this TF transform:
 
 ## Configuration model
 
-The launch file always loads a parameter YAML file through `params_file`.
+The launch file has two exclusive configuration modes.
 
-If you do not pass `params_file`, the default file installed by this package is used:
-`config/example_fake_localization.yaml`.
+If `params_file` is empty, the node parameters are built from the launch arguments:
+- `global_frame`
+- `odometry_frame`
+- `base_frame`
+- `delta_x`
+- `delta_y`
+- `delta_yaw`
+- `transform_tolerance`
 
-If a YAML value is written as `$(var <launch_argument_name>)`, that value is resolved from the
-current launch context. This allows a YAML file to delegate selected values to launch arguments.
-If a YAML value is written as a literal, that literal value is used as-is.
+If `params_file` is not empty, the node parameters are loaded from that YAML file instead. In this
+mode, the launch arguments listed above are ignored.
 
-An empty `params_file` is not a supported value. `ParameterFile` expects a real file path, so a
-wrapper launch should pass a valid YAML path or leave `params_file` unset and let this launch file
-use its default.
+`use_sim_time` is the only exception. It is always taken from the `use_sim_time` launch argument.
+If a YAML file also contains `use_sim_time`, the launch argument still wins.
 
 The launch file also accepts:
 - `use_sim_time`
@@ -82,7 +86,7 @@ accept the transform when message and TF timestamps are not perfectly aligned.
 
 ## Examples
 
-Launch with the package example YAML and override selected `$(var ...)` values from the CLI:
+Launch without `params_file`. In this mode the node parameters come from the launch arguments:
 
 ```bash
 ros2 launch fake_localization fake_localization.launch.py \
@@ -98,55 +102,21 @@ ros2 launch fake_localization fake_localization.launch.py \
   node_logging_options:="--ros-args --log-level debug"
 ```
 
-Use a custom `params_file` where all values are delegated to launch arguments:
+Use a custom `params_file`. In this mode the YAML file defines the node parameters, except for
+`use_sim_time`, which still comes from the launch argument:
 
 ```yaml
 /**/fake_localization:
   ros__parameters:
-    use_sim_time: $(var use_sim_time)
-    global_frame: $(var global_frame)
-    odometry_frame: $(var odometry_frame)
-    base_frame: $(var base_frame)
-    delta_x: $(var delta_x)
-    delta_y: $(var delta_y)
-    delta_yaw: $(var delta_yaw)
-    transform_tolerance: $(var transform_tolerance)
-```
-
-In this case, the YAML structure stays fixed and the launch arguments provide the actual values.
-
-Use a custom `params_file` where some values are literal and some still come from launch arguments:
-
-```yaml
-/**/fake_localization:
-  ros__parameters:
-    use_sim_time: $(var use_sim_time)
+    use_sim_time: false
     global_frame: map
-    odometry_frame: robot_1/odom
-    base_frame: robot_1/base_link
+    odometry_frame: robot_1_odom
+    base_frame: robot_1_base_link
     delta_x: 0.0
     delta_y: 0.0
-    delta_yaw: $(var delta_yaw)
-    transform_tolerance: 0.2
+    delta_yaw: 0.0
+    transform_tolerance: 0.1
 ```
 
-In this case, the literal YAML values are used directly, and only `delta_yaw` and `use_sim_time`
-are resolved from the launch context.
-
-Use a custom `params_file` where every node parameter is literal except `use_sim_time`:
-
-```yaml
-/**/fake_localization:
-  ros__parameters:
-    use_sim_time: $(var use_sim_time)
-    global_frame: map
-    odometry_frame: robot_1/odom
-    base_frame: robot_1/base_link
-    delta_x: 1.5
-    delta_y: -0.2
-    delta_yaw: 0.1
-    transform_tolerance: 0.2
-```
-
-In this case, the YAML file fully defines the node configuration except for the simulation-clock
-switch.
+In this example, the value `use_sim_time: false` in the YAML file is not the effective value if the
+launch command passes `use_sim_time:=True`. The launch argument is applied after the YAML file.
