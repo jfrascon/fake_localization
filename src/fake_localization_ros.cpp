@@ -51,7 +51,7 @@ namespace fake_localization
     msg_filter_sub_{this, ""},
     base_pose_ground_truth_sub_{this->create_subscription<nav_msgs::msg::Odometry>(
       "base_pose_ground_truth",
-      1,
+      rclcpp::SensorDataQoS(),
       std::bind(&FakeLocalization::ground_truth_cb, this, std::placeholders::_1))},
     // tf_filter will wait for transforms T_<target_frame=base_frame>_<odom_msg->header.frame_id>.
     // Once the transform is available, the 'update_cb' is called.

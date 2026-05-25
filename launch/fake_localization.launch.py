@@ -34,13 +34,15 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 'transform_tolerance', default_value='0.1', description='Tolerance to consider transforms as up-to-date'
             ),
-            DeclareLaunchArgument('node_remappings', default_value='', description=rlh.REMAPPINGS_DESC),
             DeclareLaunchArgument(
-                'node_options', default_value=rlh.default_node_options_str(), description=rlh.NODE_OPTIONS_DESC
+                'node_remappings', default_value=rlh.default_node_remappings_json_str(), description=rlh.REMAPPINGS_DESC
+            ),
+            DeclareLaunchArgument(
+                'node_options', default_value=rlh.default_node_options_json_str(), description=rlh.NODE_OPTIONS_DESC
             ),
             DeclareLaunchArgument(
                 'node_logging_options',
-                default_value=rlh.default_logging_options_str(),
+                default_value=rlh.default_node_logging_options_json_str(),
                 description=rlh.LOGGING_OPTIONS_DESC,
             ),
             OpaqueFunction(function=launch_fake_localization_node),
@@ -101,9 +103,13 @@ def launch_fake_localization_node(ctx: LaunchContext) -> list[LaunchDescriptionE
     # file.
     parameters.append({'use_sim_time': ParameterValue(LaunchConfiguration('use_sim_time'), value_type=bool)})
 
-    # node_options include 'name', 'output', 'emulate_tty', 'respawn', 'respawn_delay',
-    node_options = rlh.process_node_options(LaunchConfiguration('node_options').perform(ctx))
-    node_name = str(node_options['name']) or 'fake_localization'
+    node_name = 'fake_localization'
+    node_options, node_remappings, node_ros_arguments = rlh.resolve_node_launch_configs(
+        [node_name],
+        LaunchConfiguration('node_options').perform(ctx),
+        LaunchConfiguration('node_logging_options').perform(ctx),
+        LaunchConfiguration('node_remappings').perform(ctx),
+    )
 
     return [
         Node(
@@ -112,11 +118,11 @@ def launch_fake_localization_node(ctx: LaunchContext) -> list[LaunchDescriptionE
             namespace=LaunchConfiguration('namespace'),
             name=node_name,
             parameters=parameters,
-            remappings=rlh.process_remappings(LaunchConfiguration('node_remappings').perform(ctx)),
-            ros_arguments=rlh.process_node_logging_options(LaunchConfiguration('node_logging_options').perform(ctx)),
-            output=node_options['output'],
-            emulate_tty=node_options['emulate_tty'],
-            respawn=node_options['respawn'],
-            respawn_delay=node_options['respawn_delay'],
+            remappings=node_remappings[node_name],
+            ros_arguments=node_ros_arguments[node_name],
+            output=node_options[node_name]['output'],
+            emulate_tty=node_options[node_name]['emulate_tty'],
+            respawn=node_options[node_name]['respawn'],
+            respawn_delay=node_options[node_name]['respawn_delay'],
         )
     ]
