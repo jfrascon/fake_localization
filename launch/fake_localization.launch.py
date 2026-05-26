@@ -4,8 +4,9 @@ from typing import Any, List
 import ros2_launch_helpers as rlh
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
+from launch.utilities.type_utils import normalize_typed_substitution, perform_typed_substitution
 from launch_ros.actions import Node
-from launch_ros.descriptions import ParameterFile, ParameterValue
+from launch_ros.descriptions import ParameterFile
 
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity  # noqa
 
@@ -14,6 +15,9 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument('namespace', default_value='robot', description='namespace'),
+            # If params_file is not empty, the node is configured with the
+            # parameters from that file. Otherwise, the node is configured with
+            # the parameters declared after params_file.
             DeclareLaunchArgument('params_file', default_value='', description='YAML file with node parameters'),
             DeclareLaunchArgument(
                 'use_sim_time',
@@ -26,7 +30,7 @@ def generate_launch_description():
                 'odometry_frame', default_value='robot_odom', description='Odometry frame for the robot'
             ),
             DeclareLaunchArgument(
-                'base_frame', default_value='robot_base_link', description='Base frame name for the robot'
+                'base_frame', default_value='robot_base_footprint_link', description='Base frame name for the robot'
             ),
             DeclareLaunchArgument('delta_x', default_value='0.0', description='Offset in x'),
             DeclareLaunchArgument('delta_y', default_value='0.0', description='Offset in y'),
@@ -34,6 +38,8 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 'transform_tolerance', default_value='0.1', description='Tolerance to consider transforms as up-to-date'
             ),
+            # Remappings can be applied to the following topics:
+            # amcl_pose, base_pose_ground_truth, initialpose, particlecloud.
             DeclareLaunchArgument(
                 'node_remappings', default_value=rlh.default_node_remappings_json_str(), description=rlh.REMAPPINGS_DESC
             ),
@@ -51,10 +57,10 @@ def generate_launch_description():
 
 
 def launch_fake_localization_node(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
-    # The launch file has two exclusive configuration modes for the node-specific parameters.
-    # If `params_file` is not empty, those parameters come from that file.
-    # If `params_file` is empty, those parameters come from the launch arguments below.
-    # `use_sim_time` is the only exception: it is always taken from its launch argument.
+    # The launch file has two exclusive configuration modes for node parameters.
+    # If `params_file` is not empty, every node parameter comes from that file.
+    # If `params_file` is empty, every node parameter comes from the launch
+    # arguments below.
     parameters: List[Any] = []
 
     params_file = LaunchConfiguration('params_file').perform(ctx)
@@ -65,6 +71,9 @@ def launch_fake_localization_node(ctx: LaunchContext) -> list[LaunchDescriptionE
 
         parameters.append(ParameterFile(params_file, allow_substs=True))
     else:
+        use_sim_time_lc = LaunchConfiguration('use_sim_time')
+        use_sim_time = perform_typed_substitution(ctx, normalize_typed_substitution(use_sim_time_lc, bool), bool)
+
         try:
             delta_x = float(LaunchConfiguration('delta_x').perform(ctx))
         except ValueError as exc:
@@ -87,6 +96,7 @@ def launch_fake_localization_node(ctx: LaunchContext) -> list[LaunchDescriptionE
 
         parameters.append(
             {
+                'use_sim_time': use_sim_time,
                 'global_frame': LaunchConfiguration('global_frame').perform(ctx),
                 'odometry_frame': LaunchConfiguration('odometry_frame').perform(ctx),
                 'base_frame': LaunchConfiguration('base_frame').perform(ctx),
@@ -96,12 +106,6 @@ def launch_fake_localization_node(ctx: LaunchContext) -> list[LaunchDescriptionE
                 'transform_tolerance': transform_tolerance,
             }
         )
-
-    # The `use_sim_time` parameter is always taken from the launch argument, even if a params_file
-    # is provided.
-    # This allows to easily switch between real and simulated time without modifying the params
-    # file.
-    parameters.append({'use_sim_time': ParameterValue(LaunchConfiguration('use_sim_time'), value_type=bool)})
 
     node_name = 'fake_localization'
     node_options, node_remappings, node_ros_arguments = rlh.resolve_node_launch_configs(
