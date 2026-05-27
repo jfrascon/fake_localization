@@ -15,11 +15,7 @@ def generate_launch_description():
         [
             DeclareLaunchArgument('namespace', default_value='robot', description='namespace'),
             DeclareLaunchArgument('params_file', description='YAML file with all node parameters'),
-            DeclareLaunchArgument(
-                'params_file_allow_substs',
-                default_value='False',
-                choices=['True', 'true', 'False', 'false'],
-            ),
+            DeclareLaunchArgument('params_file_allow_substs', choices=['True', 'true', 'False', 'false']),
             DeclareLaunchArgument('node_name', default_value='fake_localization', description='Node name'),
             # Remappings can be applied to the following topics:
             # amcl_pose, base_pose_ground_truth, initialpose, particlecloud.
