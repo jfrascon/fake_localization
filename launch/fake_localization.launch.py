@@ -36,7 +36,7 @@ def generate_launch_description():
 
 
 def _launch_node(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
-    params_file = LaunchConfiguration('params_file').perform(ctx)
+    params_file = rlh.resolve_file(LaunchConfiguration('params_file').perform(ctx))
 
     if not Path(params_file).is_file():
         raise FileNotFoundError(f"Params file '{params_file}' does not exist. ")
