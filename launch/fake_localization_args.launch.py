@@ -70,6 +70,10 @@ def _launch_node(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
     ]
 
     node_name = LaunchConfiguration('node_name').perform(ctx)
+
+    if not rlh.is_valid_name(node_name):
+        raise RuntimeError(f"The name of the node must be ASCII [A-Za-z0-9_] only: '{node_name}'")
+
     node_options, node_remappings, node_ros_arguments = rlh.resolve_node_launch_configs(
         [node_name],
         LaunchConfiguration('node_options').perform(ctx),
