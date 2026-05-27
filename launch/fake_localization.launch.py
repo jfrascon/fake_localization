@@ -3,6 +3,7 @@ from pathlib import Path
 import ros2_launch_helpers as rlh
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
+from launch.utilities.type_utils import normalize_typed_substitution, perform_typed_substitution
 from launch_ros.actions import Node
 from launch_ros.descriptions import ParameterFile
 
@@ -14,6 +15,11 @@ def generate_launch_description():
         [
             DeclareLaunchArgument('namespace', default_value='robot', description='namespace'),
             DeclareLaunchArgument('params_file', description='YAML file with all node parameters'),
+            DeclareLaunchArgument(
+                'params_file_allow_substs',
+                default_value='False',
+                choices=['True', 'true', 'False', 'false'],
+            ),
             DeclareLaunchArgument('node_name', default_value='fake_localization', description='Node name'),
             # Remappings can be applied to the following topics:
             # amcl_pose, base_pose_ground_truth, initialpose, particlecloud.
@@ -39,6 +45,11 @@ def _launch_node(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
     if not Path(params_file).is_file():
         raise FileNotFoundError(f"Params file '{params_file}' does not exist. ")
 
+    params_file_allow_substs_lc = LaunchConfiguration('params_file_allow_substs')
+    params_file_allow_substs = perform_typed_substitution(
+        ctx, normalize_typed_substitution(params_file_allow_substs_lc, bool), bool
+    )
+
     node_name = LaunchConfiguration('node_name').perform(ctx)
 
     if not rlh.is_valid_name(node_name):
@@ -57,7 +68,7 @@ def _launch_node(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
             executable='fake_localization_node',
             namespace=LaunchConfiguration('namespace'),
             name=node_name,
-            parameters=[ParameterFile(params_file, allow_substs=True)],
+            parameters=[ParameterFile(params_file, allow_substs=params_file_allow_substs)],
             remappings=node_remappings[node_name],
             ros_arguments=node_ros_arguments[node_name],
             output=node_options[node_name]['output'],
