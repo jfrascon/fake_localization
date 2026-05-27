@@ -61,7 +61,7 @@ def _launch_node(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
             'use_sim_time': use_sim_time,
             'global_frame': LaunchConfiguration('global_frame').perform(ctx),
             'odometry_frame': LaunchConfiguration('odometry_frame').perform(ctx),
-            'base_frame': LaunchConfiguration('robot_base_frame').perform(ctx),
+            'robot_base_frame': LaunchConfiguration('robot_base_frame').perform(ctx),
             'delta_x': to_float(ctx, 'delta_x'),
             'delta_y': to_float(ctx, 'delta_y'),
             'delta_yaw': to_float(ctx, 'delta_yaw'),

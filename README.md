@@ -41,7 +41,7 @@ built from these launch arguments:
 - `use_sim_time`
 - `global_frame`
 - `odometry_frame`
-- `base_frame`
+- `robot_base_frame`
 - `delta_x`
 - `delta_y`
 - `delta_yaw`
@@ -64,7 +64,7 @@ The node reads these ROS parameters:
 - `use_sim_time` (`bool`)
 - `global_frame` (`string`, default: `map`)
 - `odometry_frame` (`string`, default: `odom`)
-- `base_frame` (`string`, default: `base_link`)
+- `robot_base_frame` (`string`, default: `base_link`)
 - `delta_x` (`double`, default: `0.0`)
 - `delta_y` (`double`, default: `0.0`)
 - `delta_yaw` (`double`, default: `0.0`)
@@ -96,7 +96,7 @@ ros2 launch fake_localization fake_localization_args.launch.py \
   use_sim_time:=false \
   global_frame:=map \
   odometry_frame:=odom \
-  base_frame:=base_link \
+  robot_base_frame:=base_link \
   delta_x:=0.0 \
   delta_y:=0.0 \
   delta_yaw:=0.0 \
@@ -113,7 +113,7 @@ Example YAML file:
     use_sim_time: false
     global_frame: map
     odometry_frame: robot_1_odom
-    base_frame: robot_1_base_link
+    robot_base_frame: robot_1_base_link
     delta_x: 0.0
     delta_y: 0.0
     delta_yaw: 0.0

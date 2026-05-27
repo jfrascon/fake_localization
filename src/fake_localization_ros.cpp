@@ -13,7 +13,7 @@ namespace fake_localization
     Node("fake_localization", options),
     global_frame_{this->declare_parameter<std::string>("global_frame", std::string{"map"})},
     odometry_frame_{this->declare_parameter<std::string>("odometry_frame", std::string{"odom"})},
-    base_frame_{this->declare_parameter<std::string>("base_frame", std::string{"base_link"})},
+    robot_base_frame_{this->declare_parameter<std::string>("robot_base_frame", std::string{"base_link"})},
     transform_tolerance_{this->declare_parameter<double>("transform_tolerance", 0.1)},
     tf_buffer_{this->get_clock()},
     tf_listener_{tf_buffer_, this, true},
@@ -27,9 +27,9 @@ namespace fake_localization
     // a regular subscription ('base_pose_ground_truth_sub_') to receive the odometry messages (in the associated
     // callback) to SET the correct frame_id in its header, and after that editing operation the msg is passed to the
     // 'tf_filter_'. This way we can ensure the 'tf_filter_' waits for the correct transform
-    // T:<target_frame=base_frame> -> <odom_msg->header.frame_id>, and once the transform is available, the 'update_cb'
+    // T:<target_frame=robot_base_frame> -> <odom_msg->header.frame_id>, and once the transform is available, the 'update_cb'
     // method is called.
-    // Note: It is also valid to receive the tranformation T:<odom_msg->header.frame_id> -> <target_frame=base_frame>,
+    // Note: It is also valid to receive the tranformation T:<odom_msg->header.frame_id> -> <target_frame=robot_base_frame>,
     // since one transformation can be inverted to get the other and vice versa. And, in fact this last
     // transformation shown above is very likely to be the one received in the 'tf_buffer_', since it is the
     // transformation that usually is broadcasted by the robot simulation or the robot odometry driver (the source of
@@ -37,27 +37,27 @@ namespace fake_localization
     // transformations coming from both sources will overwrite each other in the 'tf_buffer_', leading to erratic
     // behavior). However, from a pure theoretical point of view, it is more correct to set the 'odometry_frame_' in
     // the 'odom_msg->header.frame_id' in the subscription callback, and the obviously the target frame in the
-    // 'tf_filter_' constructor must set to 'base_frame_', leading to the waiting for the transformation
-    // T:<target_frame=base_frame> -> <odom_msg->header.frame_id>, although we have in mind to use/receive the inverse
-    // transformation, T:<odom_msg->header.frame_id> -> <target_frame=base_frame>.
+    // 'tf_filter_' constructor must set to 'robot_base_frame_', leading to the waiting for the transformation
+    // T:<target_frame=robot_base_frame> -> <odom_msg->header.frame_id>, although we have in mind to use/receive the inverse
+    // transformation, T:<odom_msg->header.frame_id> -> <target_frame=robot_base_frame>.
     // To say in other words, we could have set the target frame in the 'tf_filter_' to 'odometry_frame_' and then
-    // in the subscription callback set the 'odom_msg->header.frame_id' to 'base_frame_', leading to the waiting for the
-    // transformation T:<target_frame=odometry_frame_> -> <odom_msg->header.frame_id = base_frame_>, but probably this
+    // in the subscription callback set the 'odom_msg->header.frame_id' to 'robot_base_frame_', leading to the waiting for the
+    // transformation T:<target_frame=odometry_frame_> -> <odom_msg->header.frame_id = robot_base_frame_>, but probably this
     // will lead to confusion when reading the code, since what you expect to see/set in the 'odom_msg->header.frame_id'
     // is the odometry frame.
     // However, both approaches explained here are valid from a pure theoretical point of view, since they provide the
     // same result, which is to get:
-    // T:<base_frame> -> <odometry_frame_> and its inverse. T:<odometry_frame_> -> <base_frame>.
+    // T:<robot_base_frame> -> <odometry_frame_> and its inverse. T:<odometry_frame_> -> <robot_base_frame>.
     msg_filter_sub_{this, ""},
     base_pose_ground_truth_sub_{this->create_subscription<nav_msgs::msg::Odometry>(
       "base_pose_ground_truth",
       rclcpp::SensorDataQoS(),
       std::bind(&FakeLocalization::ground_truth_cb, this, std::placeholders::_1))},
-    // tf_filter will wait for transforms T_<target_frame=base_frame>_<odom_msg->header.frame_id>.
+    // tf_filter will wait for transforms T_<target_frame=robot_base_frame>_<odom_msg->header.frame_id>.
     // Once the transform is available, the 'update_cb' is called.
     tf_filter_{msg_filter_sub_,
                tf_buffer_,
-               base_frame_,
+               robot_base_frame_,
                10,
                this->get_node_logging_interface(),
                this->get_node_clock_interface()},
@@ -85,7 +85,7 @@ namespace fake_localization
   {
     RCLCPP_DEBUG(this->get_logger(), "global_frame parameter set successfully to %s", global_frame_.c_str());
     RCLCPP_DEBUG(this->get_logger(), "odometry_frame parameter set successfully to %s", odometry_frame_.c_str());
-    RCLCPP_DEBUG(this->get_logger(), "base_frame parameter set successfully to %s", base_frame_.c_str());
+    RCLCPP_DEBUG(this->get_logger(), "robot_base_frame parameter set successfully to %s", robot_base_frame_.c_str());
 
     RCLCPP_DEBUG(this->get_logger(), "transform_tolerance parameter set successfully to %f", transform_tolerance_);
 
@@ -155,10 +155,10 @@ namespace fake_localization
     // 'world', 'sim', etc.
 
     // We are going to 'force' the 'tf_filter_' to wait for transformations 'T:base_fr->odom_fr':
-    // T_<target_frame=base_frame>_<odom_msg->header.frame_id>
+    // T_<target_frame=robot_base_frame>_<odom_msg->header.frame_id>
 
     // To do that we have to do two things, we already did the first one when the element 'tf_filter_' was constructed,
-    // by indicating the 'target_frame = base_frame_', which is the frame the filter will transform data into from
+    // by indicating the 'target_frame = robot_base_frame_', which is the frame the filter will transform data into from
     // the frame indicated in the header of the odometry messages received (base_pose_ground_truth messages).
     // Second thing is to change the frame id of 'msg' (base_pose_ground_truth message) to be equal to the odometry
     // frame, i.e; to 'odometry_frame_'.
@@ -201,7 +201,7 @@ namespace fake_localization
       // Compute T:base_fr->global_fr.
       // T:base_fr->global_fr = (T:global_fr->base_fr)^-1
       geometry_msgs::msg::TransformStamped T_base_fr_global_fr;
-      T_base_fr_global_fr.header.frame_id = base_frame_;
+      T_base_fr_global_fr.header.frame_id = robot_base_frame_;
       T_base_fr_global_fr.header.stamp    = base_pose_ground_truth_msg->header.stamp;
       tf2::convert(Tf2_global_fr_base_fr.inverse(), T_base_fr_global_fr.transform);
 
@@ -209,7 +209,7 @@ namespace fake_localization
       // Note: the 'target_frame' is the third argument of the function.
       // 1. Look for the transform T:<target_frame> -> <first_parameter.header.frame_id>
       //    target_frame = odometry_frame_
-      //    first_parameter.header.frame_id = base_frame_
+      //    first_parameter.header.frame_id = robot_base_frame_
       //    So, it looks for T:odom_fr->base_fr.
       // 2. Compute the output transform as:
       //    output = T:<target_frame> -> <first_parameter.header.frame_id> * first_parameter.transform
@@ -222,7 +222,7 @@ namespace fake_localization
       RCLCPP_ERROR(this->get_logger(),
                    "Failed to transform to %s from %s: %s\n",
                    odometry_frame_.c_str(),
-                   base_frame_.c_str(),
+                   robot_base_frame_.c_str(),
                    e.what());
       return;
     }
@@ -319,7 +319,7 @@ namespace fake_localization
     geometry_msgs::msg::TransformStamped T_current_base_fr_global_fr;
     try
     {
-      T_current_base_fr_global_fr = tf_buffer_.lookupTransform(base_frame_, global_frame_, rclcpp::Time(0));
+      T_current_base_fr_global_fr = tf_buffer_.lookupTransform(robot_base_frame_, global_frame_, rclcpp::Time(0));
     }
     catch(tf2::TransformException& e)
     {
