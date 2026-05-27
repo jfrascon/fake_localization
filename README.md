@@ -12,7 +12,8 @@ the original ROS 1 `fake_localization` package by Ioan A. Sucan.
 
 ## What this package launches
 
-`fake_localization.launch.py` launches one `fake_localization_node`.
+`fake_localization.launch.py` launches one `fake_localization_node` from a YAML parameter file.
+`fake_localization_args.launch.py` launches the same node from launch arguments.
 
 The `namespace` launch argument places that node under a ROS namespace. Use a different namespace
 per robot instance in multirobot setups so node names and topics do not collide.
@@ -30,24 +31,13 @@ The node broadcasts this TF transform:
 
 ## Configuration model
 
-The launch file has two exclusive configuration modes.
+The package provides two launch files with separate configuration contracts.
 
-If `params_file` is empty, the node parameters are built from the launch arguments:
-- `global_frame`
-- `odometry_frame`
-- `base_frame`
-- `delta_x`
-- `delta_y`
-- `delta_yaw`
-- `transform_tolerance`
+`fake_localization.launch.py` requires `params_file`. In this mode every node parameter comes from
+that YAML file. The launch file does not declare per-parameter launch arguments.
 
-If `params_file` is not empty, the node parameters are loaded from that YAML file instead. In this
-mode, the launch arguments listed above are ignored.
-
-`use_sim_time` is the only exception. It is always taken from the `use_sim_time` launch argument.
-If a YAML file also contains `use_sim_time`, the launch argument still wins.
-
-The launch file also accepts:
+`fake_localization_args.launch.py` does not use a YAML file. In this mode the node parameters are
+built from these launch arguments:
 - `use_sim_time`
 - `global_frame`
 - `odometry_frame`
@@ -56,6 +46,8 @@ The launch file also accepts:
 - `delta_y`
 - `delta_yaw`
 - `transform_tolerance`
+
+Both launch files also accept:
 - `node_remappings`
 - `node_options`
 - `node_logging_options`
@@ -86,11 +78,22 @@ accept the transform when message and TF timestamps are not perfectly aligned.
 
 ## Examples
 
-Launch without `params_file`. In this mode the node parameters come from the launch arguments:
+Launch with a YAML parameter file:
 
 ```bash
 ros2 launch fake_localization fake_localization.launch.py \
   namespace:=robot_1 \
+  params_file:=/path/to/fake_localization.yaml \
+  node_remappings:="base_pose_ground_truth:=odom" \
+  node_logging_options:="--ros-args --log-level debug"
+```
+
+Launch without a YAML parameter file. In this mode the node parameters come from launch arguments:
+
+```bash
+ros2 launch fake_localization fake_localization_args.launch.py \
+  namespace:=robot_1 \
+  use_sim_time:=false \
   global_frame:=map \
   odometry_frame:=odom \
   base_frame:=base_link \
@@ -102,8 +105,7 @@ ros2 launch fake_localization fake_localization.launch.py \
   node_logging_options:="--ros-args --log-level debug"
 ```
 
-Use a custom `params_file`. In this mode the YAML file defines the node parameters, except for
-`use_sim_time`, which still comes from the launch argument:
+Example YAML file:
 
 ```yaml
 /**/fake_localization:
@@ -117,6 +119,3 @@ Use a custom `params_file`. In this mode the YAML file defines the node paramete
     delta_yaw: 0.0
     transform_tolerance: 0.1
 ```
-
-In this example, the value `use_sim_time: false` in the YAML file is not the effective value if the
-launch command passes `use_sim_time:=True`. The launch argument is applied after the YAML file.

@@ -1,9 +1,9 @@
 /**/fake_localization:
   ros__parameters:
-    use_sim_time: $(var use_sim_time)
+    use_sim_time: false
     global_frame: map
-    odometry_frame: $(var robot_prefix)odom
-    base_frame: $(var robot_prefix)base_footprint_link
+    odometry_frame: robot_odom
+    base_frame: robot_base_footprint_link
     delta_x: 0.0
     delta_y: 0.0
     delta_yaw: 0.0

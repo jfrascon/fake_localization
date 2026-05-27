@@ -11,6 +11,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -24,6 +25,8 @@ find_package(angles REQUIRED)
 include_directories(include)
 
 install(DIRECTORY include/ DESTINATION include)
+
+ament_python_install_package(${PROJECT_NAME})
 
 add_library(fake_localization_component SHARED
   src/fake_localization_ros.cpp
