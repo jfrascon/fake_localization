@@ -13,7 +13,6 @@ the original ROS 1 `fake_localization` package by Ioan A. Sucan.
 ## What this package launches
 
 `fake_localization.launch.py` launches one `fake_localization_node` from a YAML parameter file.
-`fake_localization_args.launch.py` launches the same node from launch arguments.
 
 The `namespace` launch argument places that node under a ROS namespace. Use a different namespace
 per robot instance in multirobot setups so node names and topics do not collide.
@@ -27,27 +26,14 @@ The node publishes:
 - `particlecloud` (`geometry_msgs/msg/PoseArray`)
 
 The node broadcasts this TF transform:
-- `<global_frame> -> <odometry_frame>`
+- `<global_frame> -> <robot_odometry_frame>`
 
 ## Configuration model
-
-The package provides two launch files with separate configuration contracts.
 
 `fake_localization.launch.py` requires `params_file`. In this mode every node parameter comes from
 that YAML file. The launch file does not declare per-parameter launch arguments.
 
-`fake_localization_args.launch.py` does not use a YAML file. In this mode the node parameters are
-built from these launch arguments:
-- `use_sim_time`
-- `global_frame`
-- `odometry_frame`
-- `robot_base_frame`
-- `delta_x`
-- `delta_y`
-- `delta_yaw`
-- `transform_tolerance`
-
-Both launch files also accept:
+The launch file also accepts:
 - `node_remappings`
 - `node_options`
 - `node_logging_options`
@@ -63,7 +49,7 @@ node name, output mode, and respawn settings.
 The node reads these ROS parameters:
 - `use_sim_time` (`bool`)
 - `global_frame` (`string`, default: `map`)
-- `odometry_frame` (`string`, default: `odom`)
+- `robot_odometry_frame` (`string`, default: `odom`)
 - `robot_base_frame` (`string`, default: `base_link`)
 - `delta_x` (`double`, default: `0.0`)
 - `delta_y` (`double`, default: `0.0`)
@@ -88,23 +74,6 @@ ros2 launch fake_localization fake_localization.launch.py \
   node_logging_options:="--ros-args --log-level debug"
 ```
 
-Launch without a YAML parameter file. In this mode the node parameters come from launch arguments:
-
-```bash
-ros2 launch fake_localization fake_localization_args.launch.py \
-  namespace:=robot_1 \
-  use_sim_time:=false \
-  global_frame:=map \
-  odometry_frame:=odom \
-  robot_base_frame:=base_link \
-  delta_x:=0.0 \
-  delta_y:=0.0 \
-  delta_yaw:=0.0 \
-  transform_tolerance:=0.1 \
-  node_remappings:="base_pose_ground_truth:=odom" \
-  node_logging_options:="--ros-args --log-level debug"
-```
-
 Example YAML file:
 
 ```yaml
@@ -112,7 +81,7 @@ Example YAML file:
   ros__parameters:
     use_sim_time: false
     global_frame: map
-    odometry_frame: robot_1_odom
+    robot_odometry_frame: robot_1_odom
     robot_base_frame: robot_1_base_link
     delta_x: 0.0
     delta_y: 0.0

@@ -25,7 +25,7 @@ namespace fake_localization
 
     private:
     std::string global_frame_;
-    std::string odometry_frame_;
+    std::string robot_odometry_frame_;
     std::string robot_base_frame_;
 
     double transform_tolerance_;

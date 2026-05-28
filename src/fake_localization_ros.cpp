@@ -12,7 +12,7 @@ namespace fake_localization
   FakeLocalization::FakeLocalization(const rclcpp::NodeOptions& options):
     Node("fake_localization", options),
     global_frame_{this->declare_parameter<std::string>("global_frame", std::string{"map"})},
-    odometry_frame_{this->declare_parameter<std::string>("odometry_frame", std::string{"odom"})},
+    robot_odometry_frame_{this->declare_parameter<std::string>("robot_odometry_frame", std::string{"odom"})},
     robot_base_frame_{this->declare_parameter<std::string>("robot_base_frame", std::string{"base_link"})},
     transform_tolerance_{this->declare_parameter<double>("transform_tolerance", 0.1)},
     tf_buffer_{this->get_clock()},
@@ -22,7 +22,7 @@ namespace fake_localization
     // have 'msg_filter_sub_'.
     // However, the odometry messages coming in the topic 'base_pose_ground_truth' may not have a frame_id set,
     // in the header ('header.frame_id') or it might have a frame_id that is different from what 'tf_filter_' needs,
-    // which is the odometry frame, i.e; the 'odometry_frame_' parameter.
+    // which is the odometry frame, i.e; the 'robot_odometry_frame_' parameter.
     // For that reason, even though the 'msg_filter_sub_' is created (to construct the 'tf_filter_'), we need to use
     // a regular subscription ('base_pose_ground_truth_sub_') to receive the odometry messages (in the associated
     // callback) to SET the correct frame_id in its header, and after that editing operation the msg is passed to the
@@ -35,19 +35,20 @@ namespace fake_localization
     // transformation that usually is broadcasted by the robot simulation or the robot odometry driver (the source of
     // the odometry data in use. Only one source of odometry data must be in used, not both, since if both are used the
     // transformations coming from both sources will overwrite each other in the 'tf_buffer_', leading to erratic
-    // behavior). However, from a pure theoretical point of view, it is more correct to set the 'odometry_frame_' in
+    // behavior). However, from a pure theoretical point of view, it is more correct to set the
+    // 'robot_odometry_frame_' in
     // the 'odom_msg->header.frame_id' in the subscription callback, and the obviously the target frame in the
     // 'tf_filter_' constructor must set to 'robot_base_frame_', leading to the waiting for the transformation
     // T:<target_frame=robot_base_frame> -> <odom_msg->header.frame_id>, although we have in mind to use/receive the inverse
     // transformation, T:<odom_msg->header.frame_id> -> <target_frame=robot_base_frame>.
-    // To say in other words, we could have set the target frame in the 'tf_filter_' to 'odometry_frame_' and then
+    // To say in other words, we could have set the target frame in the 'tf_filter_' to 'robot_odometry_frame_' and then
     // in the subscription callback set the 'odom_msg->header.frame_id' to 'robot_base_frame_', leading to the waiting for the
-    // transformation T:<target_frame=odometry_frame_> -> <odom_msg->header.frame_id = robot_base_frame_>, but probably this
+    // transformation T:<target_frame=robot_odometry_frame_> -> <odom_msg->header.frame_id = robot_base_frame_>, but probably this
     // will lead to confusion when reading the code, since what you expect to see/set in the 'odom_msg->header.frame_id'
     // is the odometry frame.
     // However, both approaches explained here are valid from a pure theoretical point of view, since they provide the
     // same result, which is to get:
-    // T:<robot_base_frame> -> <odometry_frame_> and its inverse. T:<odometry_frame_> -> <robot_base_frame>.
+    // T:<robot_base_frame> -> <robot_odometry_frame_> and its inverse. T:<robot_odometry_frame_> -> <robot_base_frame>.
     msg_filter_sub_{this, ""},
     base_pose_ground_truth_sub_{this->create_subscription<nav_msgs::msg::Odometry>(
       "base_pose_ground_truth",
@@ -84,7 +85,8 @@ namespace fake_localization
     particle_cloud_pub_{this->create_publisher<geometry_msgs::msg::PoseArray>("particlecloud", 1)}
   {
     RCLCPP_DEBUG(this->get_logger(), "global_frame parameter set successfully to %s", global_frame_.c_str());
-    RCLCPP_DEBUG(this->get_logger(), "odometry_frame parameter set successfully to %s", odometry_frame_.c_str());
+    RCLCPP_DEBUG(
+      this->get_logger(), "robot_odometry_frame parameter set successfully to %s", robot_odometry_frame_.c_str());
     RCLCPP_DEBUG(this->get_logger(), "robot_base_frame parameter set successfully to %s", robot_base_frame_.c_str());
 
     RCLCPP_DEBUG(this->get_logger(), "transform_tolerance parameter set successfully to %f", transform_tolerance_);
@@ -161,13 +163,13 @@ namespace fake_localization
     // by indicating the 'target_frame = robot_base_frame_', which is the frame the filter will transform data into from
     // the frame indicated in the header of the odometry messages received (base_pose_ground_truth messages).
     // Second thing is to change the frame id of 'msg' (base_pose_ground_truth message) to be equal to the odometry
-    // frame, i.e; to 'odometry_frame_'.
+    // frame, i.e; to 'robot_odometry_frame_'.
     // I know, I know, the frame_id of the 'msg' is, and should be, 'map' or 'world' or 'sim', or empty, because the
     // pose contained in 'msg' (base_pose_ground_truth messages) represents the position and orientation of the robot in
     // the world-fixed frame of the simulator, as said before.
     // However to 'trick' the 'tf_filter_' to listen to the transform 'T:base_fr->odom_fr', we have to do this trick,
     // and it does not have side effects.
-    base_pose_ground_truth_msg->header.frame_id = odometry_frame_;
+    base_pose_ground_truth_msg->header.frame_id = robot_odometry_frame_;
 
     // After we added the received 'msg' into the 'tf_filter_', with the 'tricked' frame_id, the moment a transformation
     // 'T:base_fr->odom_fr' is received, at the time (more or less) of the 'msg', the 'update_cb' callback is called.
@@ -208,20 +210,20 @@ namespace fake_localization
       // The transform function works as this:
       // Note: the 'target_frame' is the third argument of the function.
       // 1. Look for the transform T:<target_frame> -> <first_parameter.header.frame_id>
-      //    target_frame = odometry_frame_
+      //    target_frame = robot_odometry_frame_
       //    first_parameter.header.frame_id = robot_base_frame_
       //    So, it looks for T:odom_fr->base_fr.
       // 2. Compute the output transform as:
       //    output = T:<target_frame> -> <first_parameter.header.frame_id> * first_parameter.transform
       //    output = T:odom_fr->base_fr * T:base_fr->global_fr = T:odom_fr->global_fr
       //    So, the output is T:odom_fr->global_fr
-      tf_buffer_.transform(T_base_fr_global_fr, T_odom_fr_global_fr, odometry_frame_);
+      tf_buffer_.transform(T_base_fr_global_fr, T_odom_fr_global_fr, robot_odometry_frame_);
     }
     catch(tf2::TransformException& e)
     {
       RCLCPP_ERROR(this->get_logger(),
                    "Failed to transform to %s from %s: %s\n",
-                   odometry_frame_.c_str(),
+                   robot_odometry_frame_.c_str(),
                    robot_base_frame_.c_str(),
                    e.what());
       return;
@@ -232,7 +234,7 @@ namespace fake_localization
     // First, we fill the header of the transform message to be published, T:global_fr->odom_fr.
     geometry_msgs::msg::TransformStamped T_global_fr_odom_fr;
     T_global_fr_odom_fr.header.frame_id = global_frame_;
-    T_global_fr_odom_fr.child_frame_id  = odometry_frame_;
+    T_global_fr_odom_fr.child_frame_id  = robot_odometry_frame_;
     // In ROS, the 'header.stamp' field of a transform (such as in TransformStamped) not only indicates the exact time
     // at which the transformation should be applied, but also, in practice, acts as the time range within which the
     // transformation can be considered valid or approximate for some consumers.

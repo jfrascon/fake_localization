@@ -3,7 +3,7 @@
     # fake_localization.launch.py sets use_sim_time after loading this file.
     # Do not configure use_sim_time in this file.
     global_frame: map
-    odometry_frame: robot_odom
+    robot_odometry_frame: robot_odom
     robot_base_frame: robot_base_footprint_link
     delta_x: 0.0
     delta_y: 0.0
