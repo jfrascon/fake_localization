@@ -1,6 +1,7 @@
 /**/fake_localization:
   ros__parameters:
-    use_sim_time: false
+    # fake_localization.launch.py sets use_sim_time after loading this file.
+    # Do not configure use_sim_time in this file.
     global_frame: map
     odometry_frame: robot_odom
     robot_base_frame: robot_base_footprint_link
