@@ -27,28 +27,30 @@ namespace fake_localization
     // a regular subscription ('base_pose_ground_truth_sub_') to receive the odometry messages (in the associated
     // callback) to SET the correct frame_id in its header, and after that editing operation the msg is passed to the
     // 'tf_filter_'. This way we can ensure the 'tf_filter_' waits for the correct transform
-    // T:<target_frame=robot_base_frame> -> <odom_msg->header.frame_id>, and once the transform is available, the 'update_cb'
-    // method is called.
-    // Note: It is also valid to receive the tranformation T:<odom_msg->header.frame_id> -> <target_frame=robot_base_frame>,
-    // since one transformation can be inverted to get the other and vice versa. And, in fact this last
-    // transformation shown above is very likely to be the one received in the 'tf_buffer_', since it is the
-    // transformation that usually is broadcasted by the robot simulation or the robot odometry driver (the source of
-    // the odometry data in use. Only one source of odometry data must be in used, not both, since if both are used the
-    // transformations coming from both sources will overwrite each other in the 'tf_buffer_', leading to erratic
-    // behavior). However, from a pure theoretical point of view, it is more correct to set the
-    // 'robot_odometry_frame_' in
+    // T:<target_frame=robot_base_frame> -> <odom_msg->header.frame_id>, and once the transform is available, the
+    // 'update_cb' method is called.
+    // Note: It is also valid to receive the tranformation
+    // T:<odom_msg->header.frame_id> -> <target_frame=robot_base_frame>, since one transformation can be inverted to get
+    // the other and vice versa.
+    // And, in fact this last transformation shown above is very likely to be the one received in the 'tf_buffer_',
+    // since it is the transformation that usually is broadcasted by the robot simulation or the robot odometry driver
+    // (the source of the odometry data in use. Only one source of odometry data must be in used, not both, since if
+    // both are used the transformations coming from both sources will overwrite each other in the 'tf_buffer_', leading
+    // to erratic behavior).
+    // However, from a pure theoretical point of view, it is more correct to set the 'robot_odometry_frame_' in
     // the 'odom_msg->header.frame_id' in the subscription callback, and the obviously the target frame in the
     // 'tf_filter_' constructor must set to 'robot_base_frame_', leading to the waiting for the transformation
-    // T:<target_frame=robot_base_frame> -> <odom_msg->header.frame_id>, although we have in mind to use/receive the inverse
-    // transformation, T:<odom_msg->header.frame_id> -> <target_frame=robot_base_frame>.
-    // To say in other words, we could have set the target frame in the 'tf_filter_' to 'robot_odometry_frame_' and then
-    // in the subscription callback set the 'odom_msg->header.frame_id' to 'robot_base_frame_', leading to the waiting for the
-    // transformation T:<target_frame=robot_odometry_frame_> -> <odom_msg->header.frame_id = robot_base_frame_>, but probably this
-    // will lead to confusion when reading the code, since what you expect to see/set in the 'odom_msg->header.frame_id'
-    // is the odometry frame.
+    // T:<target_frame=robot_base_frame> -> <odom_msg->header.frame_id>, although we have in mind to use/receive the
+    // inverse transformation, T:<odom_msg->header.frame_id> -> <target_frame=robot_base_frame>.
+    // To say in other words, we could have set the target frame in the 'tf_filter_' to 'robot_odometry_frame_' and
+    // then in the subscription callback set the 'odom_msg->header.frame_id' to 'robot_base_frame_', leading to the
+    // waiting for the transformation
+    // T:<target_frame=robot_odometry_frame_> -> <odom_msg->header.frame_id = robot_base_frame_>, but probably this
+    // will lead to confusion when reading the code, since what you expect to see/set in the
+    // 'odom_msg->header.frame_id' is the odometry frame.
     // However, both approaches explained here are valid from a pure theoretical point of view, since they provide the
     // same result, which is to get:
-    // T:<robot_base_frame> -> <robot_odometry_frame_> and its inverse. T:<robot_odometry_frame_> -> <robot_base_frame>.
+    // T:<robot_base_frame> -> <robot_odometry_frame_> and its inverse, T:<robot_odometry_frame_> -> <robot_base_frame>.
     msg_filter_sub_{this, ""},
     base_pose_ground_truth_sub_{this->create_subscription<nav_msgs::msg::Odometry>(
       "base_pose_ground_truth",
@@ -85,8 +87,9 @@ namespace fake_localization
     particle_cloud_pub_{this->create_publisher<geometry_msgs::msg::PoseArray>("particlecloud", 1)}
   {
     RCLCPP_DEBUG(this->get_logger(), "global_frame parameter set successfully to %s", global_frame_.c_str());
-    RCLCPP_DEBUG(
-      this->get_logger(), "robot_odometry_frame parameter set successfully to %s", robot_odometry_frame_.c_str());
+    RCLCPP_DEBUG(this->get_logger(),
+                 "robot_odometry_frame parameter set successfully to %s",
+                 robot_odometry_frame_.c_str());
     RCLCPP_DEBUG(this->get_logger(), "robot_base_frame parameter set successfully to %s", robot_base_frame_.c_str());
 
     RCLCPP_DEBUG(this->get_logger(), "transform_tolerance parameter set successfully to %f", transform_tolerance_);
