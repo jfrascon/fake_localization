@@ -72,7 +72,14 @@ $$
 \begin{aligned}
 {}^{\text{global-frame}}T_{\text{sim-world-reference-frame}}
 &=
-\left({}^{\text{sim-world-reference-frame}}T_{\text{global-frame}}\right)^{-1}
+\left({}^{\text{sim-world-reference-frame}}T_{\text{global-frame}}\right)^{-1}\\
+&=
+\begin{bmatrix}
+\cos(\delta_{\mathrm{yaw}}) & \sin(\delta_{\mathrm{yaw}}) & 0 & -\delta_x\cos(\delta_{\mathrm{yaw}}) - \delta_y\sin(\delta_{\mathrm{yaw}})\\
+-\sin(\delta_{\mathrm{yaw}}) & \cos(\delta_{\mathrm{yaw}}) & 0 & \delta_x\sin(\delta_{\mathrm{yaw}}) - \delta_y\cos(\delta_{\mathrm{yaw}})\\
+0 & 0 & 1 & 0\\
+0 & 0 & 0 & 1
+\end{bmatrix}
 \end{aligned}
 $$
 
@@ -163,9 +170,11 @@ If `sim_pose` is actually odometry, then the frame written in `sim_pose.header.f
 If both odometry estimates are exactly equal:
 
 $$
+\begin{aligned}
 {}^{\text{sim-odom-frame}}T_{\text{robot-frame}}
-=
+&=
 {}^{\text{robot-odometry-frame}}T_{\text{robot-frame}}
+\end{aligned}
 $$
 
 then:
