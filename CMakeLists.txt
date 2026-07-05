@@ -79,4 +79,14 @@ install(TARGETS fake_localization_node DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME}/)
 
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+
+  ament_add_gtest(test_transform_math
+    test/test_transform_math.cpp
+  )
+  target_include_directories(test_transform_math PRIVATE include)
+  ament_target_dependencies(test_transform_math tf2)
+endif()
+
 ament_package()
