@@ -4,7 +4,7 @@
     # Do not configure use_sim_time in this file.
     global_frame: map
     robot_odometry_frame: robot_odom
-    robot_base_frame: robot_base_footprint_link
+    robot_frame: robot_base_footprint_link
     delta_x: 0.0
     delta_y: 0.0
     delta_yaw: 0.0
