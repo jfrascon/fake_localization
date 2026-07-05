@@ -54,25 +54,26 @@ In practice, this means that `sim_pose.header.frame_id` must contain the name of
 The parameters `delta_x`, `delta_y`, and `delta_yaw` define the position and orientation (pose) of `global_frame`, the global reference frame, with respect to the simulated world's reference frame:
 
 $$
+\begin{aligned}
 {}^{\text{sim-world-reference-frame}}T_{\text{global-frame}}
-=
+&=
 \begin{bmatrix}
-R_z(\text{delta-yaw}) &
-\begin{matrix}
-\text{delta-x}\\
-\text{delta-y}\\
-0
-\end{matrix}\\
-\mathbf{0}_{1 \times 3} & 1
+\cos(\delta_{\mathrm{yaw}}) & -\sin(\delta_{\mathrm{yaw}}) & 0 & \delta_x\\
+\sin(\delta_{\mathrm{yaw}}) & \cos(\delta_{\mathrm{yaw}}) & 0 & \delta_y\\
+0 & 0 & 1 & 0\\
+0 & 0 & 0 & 1
 \end{bmatrix}
+\end{aligned}
 $$
 
 Internally, `fake_localization` needs the inverse transform to convert simulator poses from the simulated world's reference frame into `global_frame`, the global reference frame:
 
 $$
+\begin{aligned}
 {}^{\text{global-frame}}T_{\text{sim-world-reference-frame}}
-=
+&=
 \left({}^{\text{sim-world-reference-frame}}T_{\text{global-frame}}\right)^{-1}
+\end{aligned}
 $$
 
 When `delta_x`, `delta_y`, and `delta_yaw` are all zero, `global_frame` coincides with the simulated world's reference frame, so the simulator pose is already expressed in `global_frame`.
@@ -80,11 +81,13 @@ When `delta_x`, `delta_y`, and `delta_yaw` are all zero, `global_frame` coincide
 With the incoming simulator pose and the inverse transform computed from the deltas, the node computes the pose of `robot_frame` expressed in `global_frame`:
 
 $$
+\begin{aligned}
 {}^{\text{global-frame}}T_{\text{robot-frame}}
-=
+&=
 {}^{\text{global-frame}}T_{\text{sim-world-reference-frame}}
 \cdot
 {}^{\text{sim-world-reference-frame}}T_{\text{robot-frame}}
+\end{aligned}
 $$
 
 That transform is the pose published on `amcl_pose`. The `particlecloud` topic contains a single particle with the same pose.
@@ -92,11 +95,13 @@ That transform is the pose published on `amcl_pose`. The `particlecloud` topic c
 A localization node usually works with the relationship between the robot pose in the global reference frame, the transform from the global reference frame to the robot odometry frame, and the robot pose in the robot odometry frame:
 
 $$
+\begin{aligned}
 {}^{\text{global-frame}}T_{\text{robot-frame}}
-=
+&=
 {}^{\text{global-frame}}T_{\text{robot-odometry-frame}}
 \cdot
 {}^{\text{robot-odometry-frame}}T_{\text{robot-frame}}
+\end{aligned}
 $$
 
 The objective of `fake_localization` is to compute and broadcast:
@@ -108,27 +113,31 @@ $$
 Solving the previous expression for that transform gives:
 
 $$
+\begin{aligned}
 {}^{\text{global-frame}}T_{\text{robot-odometry-frame}}
-=
+&=
 {}^{\text{global-frame}}T_{\text{robot-frame}}
 \cdot
-\left({}^{\text{robot-odometry-frame}}T_{\text{robot-frame}}\right)^{-1}
-=
+\left({}^{\text{robot-odometry-frame}}T_{\text{robot-frame}}\right)^{-1}\\
+&=
 {}^{\text{global-frame}}T_{\text{robot-frame}}
 \cdot
 {}^{\text{robot-frame}}T_{\text{robot-odometry-frame}}
+\end{aligned}
 $$
 
 and, substituting the expression previously computed for the pose of `robot_frame` in `global_frame`:
 
 $$
+\begin{aligned}
 {}^{\text{global-frame}}T_{\text{robot-odometry-frame}}
-=
+&=
 {}^{\text{global-frame}}T_{\text{sim-world-reference-frame}}
 \cdot
 {}^{\text{sim-world-reference-frame}}T_{\text{robot-frame}}
 \cdot
 {}^{\text{robot-frame}}T_{\text{robot-odometry-frame}}
+\end{aligned}
 $$
 
 Therefore, the node needs the incoming `sim_pose` message and the TF tree must provide the relationship between `robot_odometry_frame` and `robot_frame` at the timestamp of that message.
@@ -138,13 +147,15 @@ Therefore, the node needs the incoming `sim_pose` message and the TF tree must p
 `fake_localization` does not check whether `sim_pose` is a global/reference pose or odometry in the semantic sense. It always computes:
 
 $$
+\begin{aligned}
 {}^{\text{global-frame}}T_{\text{robot-odometry-frame}}
-=
+&=
 {}^{\text{global-frame}}T_{\text{sim-world-reference-frame}}
 \cdot
 {}^{\text{sim-world-reference-frame}}T_{\text{robot-frame}}
 \cdot
 {}^{\text{robot-frame}}T_{\text{robot-odometry-frame}}
+\end{aligned}
 $$
 
 If `sim_pose` is actually odometry, then the frame written in `sim_pose.header.frame_id` is not acting as a simulated world's reference frame. It is acting as an odometry-like frame of the simulator, called `sim_odom_frame` here for explanation purposes. In that case, `sim_pose.pose.pose` represents ${}^{\text{sim-odom-frame}}T_{\text{robot-frame}}$, i.e., the position and orientation of `robot_frame` expressed in `sim_odom_frame`. If another odometry source also provides ${}^{\text{robot-odometry-frame}}T_{\text{robot-frame}}$, `fake_localization` just multiplies both transforms, as shown before.
@@ -160,15 +171,17 @@ $$
 then:
 
 $$
+\begin{aligned}
 I_{4 \times 4}
-=
+&=
 {}^{\text{sim-odom-frame}}T_{\text{robot-frame}}
 \cdot
-\left({}^{\text{robot-odometry-frame}}T_{\text{robot-frame}}\right)^{-1}
-=
+\left({}^{\text{robot-odometry-frame}}T_{\text{robot-frame}}\right)^{-1}\\
+&=
 {}^{\text{sim-odom-frame}}T_{\text{robot-frame}}
 \cdot
 {}^{\text{robot-frame}}T_{\text{robot-odometry-frame}}
+\end{aligned}
 $$
 
 In that case, the transform published by `fake_localization`, ${}^{\text{global-frame}}T_{\text{robot-odometry-frame}}$, is the constant transform ${}^{\text{global-frame}}T_{\text{sim-odom-frame}}$, initialized from the deltas provided by the user as parameters, as shown in the following derivation:
@@ -200,23 +213,27 @@ $$
 If the two odometry estimates differ, even slightly, the product is not the identity transform $I_{4 \times 4}$:
 
 $$
+\begin{aligned}
 I_{4 \times 4}
-\neq
+&\neq
 {}^{\text{sim-odom-frame}}T_{\text{robot-frame}}
 \cdot
 {}^{\text{robot-frame}}T_{\text{robot-odometry-frame}}
+\end{aligned}
 $$
 
 Therefore, the transform published by `fake_localization`, ${}^{\text{global-frame}}T_{\text{robot-odometry-frame}}$, keeps the full expression:
 
 $$
+\begin{aligned}
 {}^{\text{global-frame}}T_{\text{robot-odometry-frame}}
-=
+&=
 {}^{\text{global-frame}}T_{\text{sim-odom-frame}}
 \cdot
 {}^{\text{sim-odom-frame}}T_{\text{robot-frame}}
 \cdot
 {}^{\text{robot-frame}}T_{\text{robot-odometry-frame}}
+\end{aligned}
 $$
 
 **This may be useful only if it is intentionally what the user of this package wants to achieve. It is not the usual purpose of this package.**
@@ -274,11 +291,13 @@ $$
 Before applying the pose selected in RViz, `fake_localization` is already computing the current pose of `robot_frame` in `global_frame`:
 
 $$
+\begin{aligned}
 {}^{\text{global-frame}}T_{\text{robot-frame}}
-=
+&=
 {}^{\text{global-frame}}T_{\text{sim-world-reference-frame}}
 \cdot
 {}^{\text{sim-world-reference-frame}}T_{\text{robot-frame}}
+\end{aligned}
 $$
 
 The selected RViz pose is the desired new value for the pose of `robot_frame` in `global_frame`. Therefore, `fake_localization` looks for a correction transform:
@@ -290,11 +309,13 @@ $$
 such that:
 
 $$
+\begin{aligned}
 {}^{\text{global-frame}}T_{\text{desired-robot-frame}}
-=
+&=
 T_{\text{frame-correction}}
 \cdot
 {}^{\text{global-frame}}T_{\text{robot-frame}}
+\end{aligned}
 $$
 
 Solving for the correction gives:
@@ -316,11 +337,13 @@ $$
 Then the node applies that correction to its internal transform:
 
 $$
+\begin{aligned}
 {}^{\text{global-frame}}T_{\text{sim-world-reference-frame},\mathrm{new}}
-=
+&=
 T_{\text{frame-correction}}
 \cdot
 {}^{\text{global-frame}}T_{\text{sim-world-reference-frame},\mathrm{old}}
+\end{aligned}
 $$
 
 In practical terms, RViz lets the user say: *I want `robot_frame` to appear here in `global_frame`.* `fake_localization` satisfies that request by changing the internal offset between `global_frame` and the simulated world's reference frame. The simulator pose itself remains unchanged.
@@ -381,14 +404,16 @@ This means that `global_frame` is located at `x=5.0`, `y=2.0` in the simulated w
 The deltas represent the transformation ${}^{\text{sim-world-reference-frame}}T_{\text{global-frame}}$:
 
 $$
+\begin{aligned}
 {}^{\text{sim-world-reference-frame}}T_{\text{global-frame}}
-=
+&=
 \begin{bmatrix}
 1 & 0 & 0 & 5.0\\
 0 & 1 & 0 & 2.0\\
 0 & 0 & 1 & 0.0\\
 0 & 0 & 0 & 1
 \end{bmatrix}
+\end{aligned}
 $$
 
 The user provides the deltas as ${}^{\text{sim-world-reference-frame}}T_{\text{global-frame}}$, but the node internally computes the inverse transform, ${}^{\text{global-frame}}T_{\text{sim-world-reference-frame}}$, before applying them to simulator poses.
@@ -396,14 +421,16 @@ The user provides the deltas as ${}^{\text{sim-world-reference-frame}}T_{\text{g
 The resulting internal transformation ${}^{\text{global-frame}}T_{\text{sim-world-reference-frame}}$ is:
 
 $$
+\begin{aligned}
 {}^{\text{global-frame}}T_{\text{sim-world-reference-frame}}
-=
+&=
 \begin{bmatrix}
 1 & 0 & 0 & -5.0\\
 0 & 1 & 0 & -2.0\\
 0 & 0 & 1 & 0.0\\
 0 & 0 & 0 & 1
 \end{bmatrix}
+\end{aligned}
 $$
 
 The parameters are defined this way because it is usually easier for the user to decide where `global_frame` is located with respect to the simulated world's reference frame than to manually provide the inverse transform.
@@ -454,39 +481,43 @@ delta_yaw: 1.5708
 This defines the full rigid transform:
 
 $$
+\begin{aligned}
 {}^{\text{sim-world-reference-frame}}T_{\text{global-frame}}
-=
+&=
 \begin{bmatrix}
 \cos(1.5708) & -\sin(1.5708) & 0 & 5.0\\
 \sin(1.5708) & \cos(1.5708) & 0 & 2.0\\
 0 & 0 & 1 & 0.0\\
 0 & 0 & 0 & 1
-\end{bmatrix}
-=
+\end{bmatrix}\\
+&=
 \begin{bmatrix}
 0 & -1 & 0 & 5.0\\
 1 & 0 & 0 & 2.0\\
 0 & 0 & 1 & 0.0\\
 0 & 0 & 0 & 1
 \end{bmatrix}
+\end{aligned}
 $$
 
 The node computes the inverse transform internally to obtain:
 
 $$
+\begin{aligned}
 {}^{\text{global-frame}}T_{\text{sim-world-reference-frame}}
-=
+&=
 \begin{bmatrix}
 \cos(1.5708) & \sin(1.5708) & 0 & -5.0\cos(1.5708) - 2.0\sin(1.5708)\\
 -\sin(1.5708) & \cos(1.5708) & 0 & 5.0\sin(1.5708) - 2.0\cos(1.5708)\\
 0 & 0 & 1 & 0.0\\
 0 & 0 & 0 & 1
-\end{bmatrix}
-=
+\end{bmatrix}\\
+&=
 \begin{bmatrix}
 0 & 1 & 0 & -2.0\\
 -1 & 0 & 0 & 5.0\\
 0 & 0 & 1 & 0.0\\
 0 & 0 & 0 & 1
 \end{bmatrix}
+\end{aligned}
 $$
