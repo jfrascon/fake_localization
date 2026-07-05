@@ -41,7 +41,7 @@ This package does not define package-specific services.
 
 #### Transform model
 
-This section uses the notation ${}^{a}T_b$ to mean the position and orientation of frame $b$ expressed in frame $a$. Equivalently, ${}^{a}T_b$ converts coordinates expressed in frame $b$ into coordinates expressed in frame $a$.
+This section uses the notation ${}^{a}T_{b}$ to mean the position and orientation of frame $b$ expressed in frame $a$. Equivalently, ${}^{a}T_{b}$ converts coordinates expressed in frame $b$ into coordinates expressed in frame $a$.
 
 The `sim_pose` message is encoded as `nav_msgs/msg/Odometry`, but the message is used here as a pose container. Therefore, the message does not necessarily represent odometry in the semantic sense. Its pose field must represent the pose of `robot_frame` expressed in the simulated world's reference frame:
 
@@ -399,10 +399,10 @@ $$
 {}^{\mathrm{global\_frame}}T_{\mathrm{sim\_world\_reference\_frame}}
 =
 \begin{bmatrix}
-\phantom{-}1 & \phantom{-}0 & \phantom{-}0 & -5.0\\
-\phantom{-}0 & \phantom{-}1 & \phantom{-}0 & -2.0\\
-\phantom{-}0 & \phantom{-}0 & \phantom{-}1 & \phantom{-}0.0\\
-\phantom{-}0 & \phantom{-}0 & \phantom{-}0 & \phantom{-}1
+1 & 0 & 0 & -5.0\\
+0 & 1 & 0 & -2.0\\
+0 & 0 & 1 & 0.0\\
+0 & 0 & 0 & 1
 \end{bmatrix}
 $$
 
@@ -421,24 +421,24 @@ $$
 {}^{\mathrm{sim\_world\_reference\_frame}}T_{\mathrm{robot\_frame}}\\
 &=
 \begin{bmatrix}
-\phantom{-}1 & \phantom{-}0 & \phantom{-}0 & -5.0\\
-\phantom{-}0 & \phantom{-}1 & \phantom{-}0 & -2.0\\
-\phantom{-}0 & \phantom{-}0 & \phantom{-}1 & \phantom{-}0.0\\
-\phantom{-}0 & \phantom{-}0 & \phantom{-}0 & \phantom{-}1
+1 & 0 & 0 & -5.0\\
+0 & 1 & 0 & -2.0\\
+0 & 0 & 1 & 0.0\\
+0 & 0 & 0 & 1
 \end{bmatrix}
 \cdot
 \begin{bmatrix}
-\phantom{-}1 & \phantom{-}0 & \phantom{-}0 & \phantom{-}8.0\\
-\phantom{-}0 & \phantom{-}1 & \phantom{-}0 & \phantom{-}6.0\\
-\phantom{-}0 & \phantom{-}0 & \phantom{-}1 & \phantom{-}0.0\\
-\phantom{-}0 & \phantom{-}0 & \phantom{-}0 & \phantom{-}1
+1 & 0 & 0 & 8.0\\
+0 & 1 & 0 & 6.0\\
+0 & 0 & 1 & 0.0\\
+0 & 0 & 0 & 1
 \end{bmatrix}\\
 &=
 \begin{bmatrix}
-\phantom{-}1 & \phantom{-}0 & \phantom{-}0 & \phantom{-}3.0\\
-\phantom{-}0 & \phantom{-}1 & \phantom{-}0 & \phantom{-}4.0\\
-\phantom{-}0 & \phantom{-}0 & \phantom{-}1 & \phantom{-}0.0\\
-\phantom{-}0 & \phantom{-}0 & \phantom{-}0 & \phantom{-}1
+1 & 0 & 0 & 3.0\\
+0 & 1 & 0 & 4.0\\
+0 & 0 & 1 & 0.0\\
+0 & 0 & 0 & 1
 \end{bmatrix}
 \end{aligned}
 $$
@@ -458,16 +458,16 @@ $$
 =
 \begin{bmatrix}
 \cos(1.5708) & -\sin(1.5708) & 0 & 5.0\\
-\sin(1.5708) & \phantom{-}\cos(1.5708) & 0 & 2.0\\
+\sin(1.5708) & \cos(1.5708) & 0 & 2.0\\
 0 & 0 & 1 & 0.0\\
 0 & 0 & 0 & 1
 \end{bmatrix}
 =
 \begin{bmatrix}
-\phantom{-}0 & -1 & \phantom{-}0 & \phantom{-}5.0\\
-\phantom{-}1 & \phantom{-}0 & \phantom{-}0 & \phantom{-}2.0\\
-\phantom{-}0 & \phantom{-}0 & \phantom{-}1 & \phantom{-}0.0\\
-\phantom{-}0 & \phantom{-}0 & \phantom{-}0 & \phantom{-}1
+0 & -1 & 0 & 5.0\\
+1 & 0 & 0 & 2.0\\
+0 & 0 & 1 & 0.0\\
+0 & 0 & 0 & 1
 \end{bmatrix}
 $$
 
@@ -477,16 +477,16 @@ $$
 {}^{\mathrm{global\_frame}}T_{\mathrm{sim\_world\_reference\_frame}}
 =
 \begin{bmatrix}
-\phantom{-}\cos(1.5708) & \sin(1.5708) & 0 & -5.0\cos(1.5708) - 2.0\sin(1.5708)\\
--\sin(1.5708) & \cos(1.5708) & 0 & \phantom{-}5.0\sin(1.5708) - 2.0\cos(1.5708)\\
+\cos(1.5708) & \sin(1.5708) & 0 & -5.0\cos(1.5708) - 2.0\sin(1.5708)\\
+-\sin(1.5708) & \cos(1.5708) & 0 & 5.0\sin(1.5708) - 2.0\cos(1.5708)\\
 0 & 0 & 1 & 0.0\\
 0 & 0 & 0 & 1
 \end{bmatrix}
 =
 \begin{bmatrix}
-\phantom{-}0 & \phantom{-}1 & \phantom{-}0 & -2.0\\
--1 & \phantom{-}0 & \phantom{-}0 & \phantom{-}5.0\\
-\phantom{-}0 & \phantom{-}0 & \phantom{-}1 & \phantom{-}0.0\\
-\phantom{-}0 & \phantom{-}0 & \phantom{-}0 & \phantom{-}1
+0 & 1 & 0 & -2.0\\
+-1 & 0 & 0 & 5.0\\
+0 & 0 & 1 & 0.0\\
+0 & 0 & 0 & 1
 \end{bmatrix}
 $$
