@@ -32,8 +32,7 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument(
                 'node_arguments',
                 default_value=(
-                    '{"name":"fake_localization","output":"screen","emulate_tty":true,'
-                    '"respawn":false,"respawn_delay":0.0,"ros_arguments":["--log-level","info"]}'
+                    '{"output":"both", "respawn":false, "respawn_delay":0.0, "ros_arguments":["--log-level","info"]}'
                 ),
                 description=rlh.LAUNCH_ACTION_ARGUMENTS_DESC,
             ),
