@@ -11,30 +11,30 @@ def generate_launch_description() -> LaunchDescription:
     """
     Build the fake localization launch description from a parameter file.
 
-    The caller must pass `params_file`, `params_file_allow_substs`, and
+    The caller must pass `fake_loc_params_file`, `fake_loc_params_file_allow_substs`, and
     `use_sim_time` explicitly. This launch file loads the YAML file first and
     then sets use_sim_time from the launch argument.
     """
     return LaunchDescription(
         [
             DeclareLaunchArgument('namespace', default_value='robot', description='namespace'),
-            DeclareLaunchArgument('params_file', description='YAML file with all node parameters'),
+            DeclareLaunchArgument('fake_loc_params_file', description='YAML file with all node parameters'),
             DeclareLaunchArgument(
-                'params_file_allow_substs',
+                'fake_loc_params_file_allow_substs',
                 choices=['True', 'true', 'False', 'false'],
-                description='Allow ROS launch substitutions in params_file',
+                description='Allow ROS launch substitutions in fake_loc_params_file',
             ),
             DeclareLaunchArgument(
                 'use_sim_time', choices=['True', 'true', 'False', 'false'], description='Use simulation clock if true'
             ),
             DeclareLaunchArgument(
-                'node_arguments', default_value=('{"output":"both"}'), description=rlh.LAUNCH_ACTION_ARGUMENTS_DESC
+                'fake_loc_node_args', default_value=('{"output":"both"}'), description=rlh.LAUNCH_ACTION_ARGUMENTS_DESC
             ),
-            rlh.RequireFile(path=LaunchConfiguration('params_file')),
+            rlh.RequireFile(path=LaunchConfiguration('fake_loc_params_file')),
             rlh.RenderParamsFile(
-                params_file=LaunchConfiguration('params_file'),
-                output_context_key='params_file',
-                condition=IfCondition(LaunchConfiguration('params_file_allow_substs')),
+                params_file=LaunchConfiguration('fake_loc_params_file'),
+                output_context_key='fake_loc_params_file',
+                condition=IfCondition(LaunchConfiguration('fake_loc_params_file_allow_substs')),
             ),
             OpaqueFunction(function=_launch_node),
         ]
@@ -43,7 +43,7 @@ def generate_launch_description() -> LaunchDescription:
 
 def _launch_node(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
     # `namespace` argument must be passed explicitly to the Node, so it is not allowed to be
-    # configured via `node_arguments` (rejected here).
+    # configured via `fake_loc_node_args` (rejected here).
     # Rejecting it here prevents the same Node field from being configured from two different
     # places.
 
@@ -53,11 +53,11 @@ def _launch_node(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
             executable='fake_localization_node',
             namespace=LaunchConfiguration('namespace'),
             parameters=[
-                ParameterFile(LaunchConfiguration('params_file'), allow_substs=False),
+                ParameterFile(LaunchConfiguration('fake_loc_params_file'), allow_substs=False),
                 {'use_sim_time': ParameterValue(LaunchConfiguration('use_sim_time'), value_type=bool)},
             ],
             **rlh.resolve_node_arguments(
-                LaunchConfiguration('node_arguments').perform(ctx), extra_rejected_arguments={'namespace'}
+                LaunchConfiguration('fake_loc_node_args').perform(ctx), extra_rejected_arguments={'namespace'}
             ),
         )
     ]
