@@ -25,7 +25,9 @@ def generate_launch_description() -> LaunchDescription:
                 description='Allow ROS launch substitutions in params_file',
             ),
             DeclareLaunchArgument(
-                'use_sim_time', choices=['True', 'true', 'False', 'false'], description='Use simulation clock if true'
+                'use_sim_time',
+                choices=['True', 'true', 'False', 'false'],
+                description='Use ROS time from /clock if true.',
             ),
             DeclareLaunchArgument(
                 'node_args', default_value=('{"output":"both"}'), description=rlh.LAUNCH_ACTION_ARGUMENTS_DESC
