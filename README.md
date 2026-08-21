@@ -8,6 +8,49 @@ The node is also available as the composable node `fake_localization::FakeLocali
 
 This ROS 2 version was migrated by [Juan Francisco Rascon Crespo](mailto:jfrascon@gmail.com) from the original ROS 1 `fake_localization` package by Ioan A. Sucan.
 
+## Workspace setup
+
+Clone this repository inside the `src` directory of a ROS 2 Jazzy workspace.
+Import its reusable source dependencies before resolving system dependencies:
+
+```bash
+cd <workspace>
+vcs import src < src/fake_localization/deps.repos
+rosdep install --from-paths src --ignore-src --rosdistro jazzy -y
+```
+
+The `deps.repos` file pins `ros2_launch_helpers` to a tested commit. A parent
+project may provide the same package through its own repository manifest.
+
+## Build
+
+Source ROS 2 and build the package together with its workspace dependencies:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+cd <workspace>
+colcon build --packages-up-to fake_localization --symlink-install
+source install/setup.bash
+```
+
+## Tests and code quality
+
+Run the package tests from the workspace root:
+
+```bash
+colcon test --packages-select fake_localization
+colcon test-result --test-result-base build/fake_localization --verbose
+```
+
+The system hooks in `pre-commit` use ROS 2 lint executables. Source ROS 2
+before running them:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+cd src/fake_localization
+pre-commit run --all-files
+```
+
 ## Nodes
 
 ### `fake_localization_node`

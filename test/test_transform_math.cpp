@@ -1,10 +1,12 @@
-#include <cmath>
+// Copyright 2026 Juan Francisco Rascon Crespo
 
 #include <gtest/gtest.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Vector3.h>
+
+#include <cmath>
 
 namespace
 {
@@ -69,8 +71,7 @@ TEST(TransformMath, SimulatorPoseIsConvertedIntoGlobalFrame)
     make_global_fr_sim_world_reference_fr_transform(5.0, 2.0, 0.0)};
   const tf2::Transform T2_sim_world_reference_fr_robot_fr{make_transform(8.0, 6.0, 0.0)};
 
-  const tf2::Transform T2_global_fr_robot_fr{T2_global_fr_sim_world_reference_fr *
-                                             T2_sim_world_reference_fr_robot_fr};
+  const tf2::Transform T2_global_fr_robot_fr{T2_global_fr_sim_world_reference_fr * T2_sim_world_reference_fr_robot_fr};
 
   expect_transform_near(T2_global_fr_robot_fr, 3.0, 4.0, 0.0);
 }
@@ -95,8 +96,7 @@ TEST(TransformMath, InitialPoseCorrectionMovesPublishedPoseToDesiredPose)
                                                      T2_sim_world_reference_fr_robot_fr};
   const tf2::Transform T2_global_fr_desired_robot_fr{make_transform(3.0, 4.0, 0.0)};
 
-  const tf2::Transform T2_frame_correction{T2_global_fr_desired_robot_fr *
-                                           T2_global_fr_robot_fr_current.inverse()};
+  const tf2::Transform T2_frame_correction{T2_global_fr_desired_robot_fr * T2_global_fr_robot_fr_current.inverse()};
   const tf2::Transform T2_global_fr_sim_world_reference_fr_new{T2_frame_correction *
                                                                T2_global_fr_sim_world_reference_fr_old};
   const tf2::Transform T2_global_fr_robot_fr_after_correction{T2_global_fr_sim_world_reference_fr_new *

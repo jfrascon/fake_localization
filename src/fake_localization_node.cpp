@@ -1,4 +1,6 @@
-#include <fake_localization.hpp>
+// Copyright 2026 Juan Francisco Rascon Crespo
+
+#include <fake_localization/fake_localization.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 int main(int argc, char** argv)

@@ -22,8 +22,6 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(angles REQUIRED)
 
-include_directories(include)
-
 install(DIRECTORY include/ DESTINATION include)
 
 ament_python_install_package(${PROJECT_NAME})
@@ -32,6 +30,12 @@ add_library(fake_localization_component SHARED
   src/fake_localization_ros.cpp
   src/fake_localization_component.cpp
 )
+
+target_include_directories(
+  fake_localization_component
+  PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<INSTALL_INTERFACE:include>")
 
 ament_target_dependencies(
   fake_localization_component
@@ -50,7 +54,18 @@ rclcpp_components_register_node(
   "fake_localization::FakeLocalization" EXECUTABLE
   exec_fake_localization_component)
 
-ament_export_targets(export_fake_localization_component)
+ament_export_dependencies(
+  angles
+  geometry_msgs
+  message_filters
+  nav_msgs
+  rclcpp
+  rclcpp_components
+  tf2
+  tf2_geometry_msgs
+  tf2_ros)
+ament_export_include_directories(include)
+ament_export_targets(export_fake_localization_component HAS_LIBRARY_TARGET)
 
 install(
   TARGETS fake_localization_component
@@ -65,6 +80,7 @@ add_executable(fake_localization_node
   src/fake_localization_node.cpp
   src/fake_localization_ros.cpp
 )
+target_include_directories(fake_localization_node PRIVATE include)
 ament_target_dependencies(
   fake_localization_node
   rclcpp
@@ -84,7 +100,20 @@ install(
   PATTERN "*.pyc" EXCLUDE)
 
 if(BUILD_TESTING)
+  find_package(ament_cmake_cppcheck REQUIRED)
+  find_package(ament_cmake_cpplint REQUIRED)
   find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_cmake_lint_cmake REQUIRED)
+
+  ament_cppcheck()
+  set_tests_properties(cppcheck PROPERTIES ENVIRONMENT "AMENT_CPPCHECK_ALLOW_SLOW_VERSIONS=1")
+  ament_cpplint(
+    MAX_LINE_LENGTH 120
+    FILTERS
+      "-whitespace/newline"
+      "-build/include_order"
+      "-runtime/indentation_namespace")
+  ament_lint_cmake(MAX_LINE_LENGTH 120)
 
   ament_add_gtest(test_transform_math
     test/test_transform_math.cpp

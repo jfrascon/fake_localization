@@ -1,3 +1,5 @@
+"""Copyright 2026 Juan Francisco Rascon Crespo."""
+
 import ros2_launch_helpers as rlh
 from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
 from launch.actions import DeclareLaunchArgument, OpaqueFunction

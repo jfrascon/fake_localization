@@ -1,12 +1,15 @@
-#include <fake_localization.hpp>
+// Copyright 2026 Juan Francisco Rascon Crespo
+
+#include <fake_localization/fake_localization.hpp>
 #include <angles/angles.h>
 #include <tf2/LinearMath/Transform.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2_ros/create_timer_ros.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace fake_localization
 {
-  // Notation: T:a->b means transform that converts coordinates expressed in frame b into frame a.
+  // Notation: T:a->b means homogeneous transformation matrix that converts coordinates expressed in
+  // frame b into frame a.
 
   // Constructor
   FakeLocalization::FakeLocalization(const rclcpp::NodeOptions& options):
@@ -94,10 +97,11 @@ namespace fake_localization
     //
     // When that transform is available at sim_pose_msg.header.stamp, the filter calls update_cb.
     msg_filter_sub_{this, ""},
-    sim_pose_sub_{this->create_subscription<nav_msgs::msg::Odometry>(
-      "sim_pose",
-      rclcpp::SensorDataQoS(),
-      std::bind(&FakeLocalization::sim_pose_cb, this, std::placeholders::_1))},
+    sim_pose_sub_{this->create_subscription<nav_msgs::msg::Odometry>("sim_pose",
+                                                                     rclcpp::SensorDataQoS(),
+                                                                     std::bind(&FakeLocalization::sim_pose_cb,
+                                                                               this,
+                                                                               std::placeholders::_1))},
     tf_filter_{msg_filter_sub_,
                tf_buffer_,
                robot_frame_,
@@ -107,10 +111,12 @@ namespace fake_localization
     // initialpose is handled with a normal ROS subscription. The callback requires
     // msg->header.frame_id to be global_frame_, so waiting for a TF transform from another frame
     // would not add useful behavior here.
-    initial_pose_sub_{this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-      "initialpose",
-      1,
-      std::bind(&FakeLocalization::init_pose_received_cb, this, std::placeholders::_1))},
+    initial_pose_sub_{this->create_subscription<
+      geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose",
+                                                     1,
+                                                     std::bind(&FakeLocalization::init_pose_received_cb,
+                                                               this,
+                                                               std::placeholders::_1))},
     pose_pub_{this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("amcl_pose", 1)},
     particle_cloud_pub_{this->create_publisher<geometry_msgs::msg::PoseArray>("particlecloud", 1)}
   {
@@ -122,7 +128,7 @@ namespace fake_localization
 
     const auto transform_tolerance{this->declare_parameter<double>("transform_tolerance", 0.1)};
     RCLCPP_DEBUG(this->get_logger(), "transform_tolerance parameter set successfully to %f", transform_tolerance);
-    tolerance_secs_     = static_cast<int32_t>(transform_tolerance);
+    tolerance_secs_ = static_cast<int32_t>(transform_tolerance);
     tolerance_nanosecs_ = static_cast<uint32_t>((transform_tolerance - static_cast<double>(tolerance_secs_)) * 1e9);
 
     const auto delta_x{this->declare_parameter<double>("delta_x", 0.0)};
@@ -183,7 +189,8 @@ namespace fake_localization
       RCLCPP_ERROR_THROTTLE(this->get_logger(),
                             *this->get_clock(),
                             5000,
-                            "Rejected sim_pose message because child_frame_id (%s) does not match robot_frame (%s)",
+                            "Rejected sim_pose message because child_frame_id (%s) does not match "
+                            "robot_frame (%s)",
                             sim_pose_msg->child_frame_id.c_str(),
                             robot_frame_.c_str());
       return;
@@ -280,16 +287,16 @@ namespace fake_localization
     // Fill the header of the transform message to be published, T:global_fr->odom_fr.
     geometry_msgs::msg::TransformStamped Ts_global_fr_odom_fr;
     Ts_global_fr_odom_fr.header.frame_id = global_frame_;
-    Ts_global_fr_odom_fr.child_frame_id  = robot_odometry_frame_;
+    Ts_global_fr_odom_fr.child_frame_id = robot_odometry_frame_;
     // TF interprets 'header.stamp' as the time at which this transform is valid.
     // By adding 'transform_tolerance' to the pose timestamp, this node sets the timestamp of the
     // published T:global_fr->odom_fr transform slightly after the pose timestamp.
     // This is a common localization pattern: downstream nodes that request the transform at a time
     // close to "now" are less likely to fail because the latest published transform is older than
     // their requested time.
-    Ts_global_fr_odom_fr.header.stamp.sec     = sim_pose_msg->header.stamp.sec + tolerance_secs_;
+    Ts_global_fr_odom_fr.header.stamp.sec = sim_pose_msg->header.stamp.sec + tolerance_secs_;
     Ts_global_fr_odom_fr.header.stamp.nanosec = sim_pose_msg->header.stamp.nanosec + tolerance_nanosecs_;
-    unsigned long int nanosec_overflow{Ts_global_fr_odom_fr.header.stamp.nanosec / 1000000000};
+    std::uint64_t nanosec_overflow{Ts_global_fr_odom_fr.header.stamp.nanosec / 1000000000};
 
     if(nanosec_overflow > 0)
     {
@@ -303,11 +310,11 @@ namespace fake_localization
     tf_broadcaster_.sendTransform(Ts_global_fr_odom_fr);
 
     geometry_msgs::msg::PoseWithCovarianceStamped robot_pose_in_global_fr;
-    robot_pose_in_global_fr.header.stamp          = sim_pose_msg->header.stamp;
-    robot_pose_in_global_fr.header.frame_id       = global_frame_;
-    robot_pose_in_global_fr.pose.pose.position.x  = T2_global_fr_robot_fr.getOrigin().x();
-    robot_pose_in_global_fr.pose.pose.position.y  = T2_global_fr_robot_fr.getOrigin().y();
-    robot_pose_in_global_fr.pose.pose.position.z  = T2_global_fr_robot_fr.getOrigin().z();
+    robot_pose_in_global_fr.header.stamp = sim_pose_msg->header.stamp;
+    robot_pose_in_global_fr.header.frame_id = global_frame_;
+    robot_pose_in_global_fr.pose.pose.position.x = T2_global_fr_robot_fr.getOrigin().x();
+    robot_pose_in_global_fr.pose.pose.position.y = T2_global_fr_robot_fr.getOrigin().y();
+    robot_pose_in_global_fr.pose.pose.position.z = T2_global_fr_robot_fr.getOrigin().z();
     robot_pose_in_global_fr.pose.pose.orientation = tf2::toMsg(T2_global_fr_robot_fr.getRotation());
     pose_pub_->publish(robot_pose_in_global_fr);
 
