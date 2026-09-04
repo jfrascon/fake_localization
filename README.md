@@ -407,12 +407,12 @@ In practical terms, RViz lets the user say: *I want `robot_frame` to appear here
 Launch arguments:
 
 - `namespace` (default: `robot`): ROS namespace for the node. Use a different namespace per robot instance in multirobot setups so node names and topics do not collide.
-- `fake_loc_params_file` (required): YAML file with all node parameters except the launch-managed `use_sim_time` override.
-- `fake_loc_params_file_allow_substs` (required, `True`/`False`): Whether ROS launch substitutions are allowed in `fake_loc_params_file`.
+- `params_file` (required): YAML file with all node parameters except the launch-managed `use_sim_time` override.
+- `params_file_allow_substs` (required, `True`/`False`): Whether ROS launch substitutions are allowed in `params_file`.
 - `use_sim_time` (required, `True`/`False`): Value passed to the node as the `use_sim_time` parameter.
-- `fake_loc_node_args` (default declared in the launch file): JSON object resolved by `ros2_launch_helpers` and passed to the ROS 2 `Node` action. It can set launch action fields such as `output`, `emulate_tty`, `respawn`, `respawn_delay`, `name`, `remappings`, and `ros_arguments`.
+- `node_args` (default: `{"output":"both"}`): JSON object resolved by `ros2_launch_helpers` and passed to the ROS 2 `Node` action. It can set launch action fields such as `output`, `emulate_tty`, `respawn`, `respawn_delay`, `name`, `remappings`, and `ros_arguments`.
 
-Do not put `namespace` inside `fake_loc_node_args`; the launch file keeps `namespace` as an explicit launch argument and rejects duplicate configuration.
+Do not put `namespace` inside `node_args`; the launch file keeps `namespace` as an explicit launch argument and rejects duplicate configuration.
 
 ## Examples
 
@@ -421,10 +421,10 @@ Launch with a YAML parameter file:
 ```bash
 ros2 launch fake_localization fake_localization.launch.py \
   namespace:=robot_1 \
-  fake_loc_params_file:=/path/to/fake_localization.yaml \
-  fake_loc_params_file_allow_substs:=False \
+  params_file:=/path/to/fake_localization.yaml \
+  params_file_allow_substs:=False \
   use_sim_time:=True \
-  fake_loc_node_args:='{"output":"both","respawn":true,"respawn_delay":2.0,"remappings":[["sim_pose","odom"]],"ros_arguments":["--log-level","debug"]}'
+  node_args:='{"output":"both","respawn":true,"respawn_delay":2.0,"remappings":[["sim_pose","odom"]],"ros_arguments":["--log-level","debug"]}'
 ```
 
 Example YAML file:
