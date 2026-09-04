@@ -11,6 +11,7 @@
 Language: Cpp
 BasedOnStyle: Google
 Standard: Auto
+AccessModifierOffset: -2
 ConstructorInitializerIndentWidth: 2
 AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments:
@@ -76,7 +77,6 @@ IndentWrappedFunctionNames: true
 InsertBraces: true
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: All
-# NamespaceIndentation: "All"
 PackConstructorInitializers: CurrentLine
 PenaltyBreakAssignment: 100000
 PenaltyBreakBeforeFirstCallParameter: 1000

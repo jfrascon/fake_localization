@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(fake_localization)
 
-# Add support for C++14
+# ROS 2 Jazzy uses C++17.
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -99,27 +99,48 @@ install(
   PATTERN "__pycache__" EXCLUDE
   PATTERN "*.pyc" EXCLUDE)
 
+install(FILES README.md LICENSE DESTINATION share/${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_cmake_cppcheck REQUIRED)
   find_package(ament_cmake_cpplint REQUIRED)
+  find_package(ament_cmake_flake8 REQUIRED)
   find_package(ament_cmake_gtest REQUIRED)
-  find_package(ament_cmake_lint_cmake REQUIRED)
+  find_package(ament_cmake_pytest REQUIRED)
+  find_package(ament_lint_auto REQUIRED)
 
-  ament_cppcheck()
-  set_tests_properties(cppcheck PROPERTIES ENVIRONMENT "AMENT_CPPCHECK_ALLOW_SLOW_VERSIONS=1")
+  ament_add_gtest(
+    test_transform_math
+    test/test_transform_math.cpp)
+  target_include_directories(test_transform_math PRIVATE include)
+  ament_target_dependencies(test_transform_math tf2)
+
+  ament_add_pytest_test(test_launch_contract test/test_launch_contract.py)
+
+  # Register each configurable linter once because ament_lint_auto cannot pass these settings.
+  list(APPEND AMENT_LINT_AUTO_EXCLUDE
+    ament_cmake_cppcheck
+    ament_cmake_cpplint
+    ament_cmake_flake8)
+
+  ament_cppcheck(include src INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
+  # Jazzy skips Cppcheck 1.88 and 2.x unless this environment variable enables them.
+  set_tests_properties(
+    cppcheck PROPERTIES ENVIRONMENT "AMENT_CPPCHECK_ALLOW_SLOW_VERSIONS=1")
+
   ament_cpplint(
     MAX_LINE_LENGTH 120
     FILTERS
-      "-whitespace/newline"
-      "-build/include_order"
-      "-runtime/indentation_namespace")
-  ament_lint_cmake(MAX_LINE_LENGTH 120)
+      -whitespace/newline
+      -whitespace/forcolon
+      -build/include_order
+      -runtime/indentation_namespace
+      -legal/copyright)
 
-  ament_add_gtest(test_transform_math
-    test/test_transform_math.cpp
-  )
-  target_include_directories(test_transform_math PRIVATE include)
-  ament_target_dependencies(test_transform_math tf2)
+  ament_flake8(CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ament_flake8.ini")
+
+  # Register the remaining linters declared as test dependencies in package.xml.
+  ament_lint_auto_find_test_dependencies()
 endif()
 
 ament_package()
