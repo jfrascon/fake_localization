@@ -1,9 +1,14 @@
-from launch import LaunchContext, LaunchDescription, LaunchDescriptionEntity
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch import LaunchContext
+from launch import LaunchDescription
+from launch import LaunchDescriptionEntity
+from launch.actions import DeclareLaunchArgument
+from launch.actions import OpaqueFunction
 from launch.substitutions import LaunchConfiguration
-from launch.utilities.type_utils import normalize_typed_substitution, perform_typed_substitution
+from launch.utilities.type_utils import normalize_typed_substitution
+from launch.utilities.type_utils import perform_typed_substitution
 from launch_ros.actions import Node
-from launch_ros.descriptions import ParameterFile, ParameterValue
+from launch_ros.descriptions import ParameterFile
+from launch_ros.descriptions import ParameterValue
 import ros2_launch_helpers as rlh
 
 
@@ -59,7 +64,9 @@ def _launch_node(ctx: LaunchContext) -> list[LaunchDescriptionEntity]:
             executable='fake_localization_node',
             namespace=LaunchConfiguration('namespace'),
             parameters=[
-                ParameterFile(LaunchConfiguration('params_file'), allow_substs=params_allow_substs),
+                ParameterFile(
+                    LaunchConfiguration('params_file'), allow_substs=params_allow_substs
+                ),
                 {
                     'use_sim_time': ParameterValue(
                         LaunchConfiguration('use_sim_time'), value_type=bool
