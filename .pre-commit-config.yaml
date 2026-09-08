@@ -123,15 +123,6 @@ repos:
   # to be installed in the development environment.
   - repo: local
     hooks:
-      - id: ament_cppcheck
-        name: ament_cppcheck
-        description: Static code analysis of C/C++ files.
-        entry: env AMENT_CPPCHECK_ALLOW_SLOW_VERSIONS=1 ament_cppcheck
-        language: system
-        files: '\.(h\+\+|h|hh|hxx|hpp|cuh|c|cc|cpp|cu|c\+\+|cxx|tpp|txx)$'
-        # Test sources are compiled, checked by the other C++ hooks, and run separately.
-        exclude: ^test/
-
       - id: ament_cpplint
         name: ament_cpplint
         description: Check C/C++ style with ROS 2 cpplint.
@@ -147,6 +138,15 @@ repos:
           # Disable runtime/indentation_namespace: .clang-format controls namespace indentation.
           # Disable legal/copyright: this project does not enforce copyright headers.
           - --filters=-whitespace/newline,-whitespace/forcolon,-build/include_order,-runtime/indentation_namespace,-legal/copyright
+
+      - id: ament_cppcheck
+        name: ament_cppcheck
+        description: Static code analysis of C/C++ files.
+        entry: env AMENT_CPPCHECK_ALLOW_SLOW_VERSIONS=1 ament_cppcheck
+        language: system
+        files: '\.(h\+\+|h|hh|hxx|hpp|cuh|c|cc|cpp|cu|c\+\+|cxx|tpp|txx)$'
+        # Test sources are compiled, checked by the other C++ hooks, and run separately.
+        exclude: ^test/
 
       - id: ament_lint_cmake
         name: ament_lint_cmake

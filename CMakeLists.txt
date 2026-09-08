@@ -60,7 +60,9 @@ ament_export_dependencies(
   tf2
   tf2_geometry_msgs
   tf2_ros)
+
 ament_export_include_directories(include)
+
 ament_export_targets(export_fake_localization_component HAS_LIBRARY_TARGET)
 
 install(
@@ -74,7 +76,9 @@ install(
 
 add_executable(fake_localization_node src/fake_localization_node.cpp
                                       src/fake_localization_ros.cpp)
+
 target_include_directories(fake_localization_node PRIVATE include)
+
 ament_target_dependencies(
   fake_localization_node
   rclcpp
@@ -97,27 +101,23 @@ install(FILES README.md LICENSE DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+
   # Exclude linters that require package-specific configuration.
   list(APPEND AMENT_LINT_AUTO_EXCLUDE
     ament_cmake_clang_format
-    ament_cmake_cppcheck
     ament_cmake_cpplint
-    ament_cmake_flake8)
+    ament_cmake_flake8
+    ament_cmake_cppcheck)
+
   # Register the remaining linters declared as test dependencies in package.xml.
   ament_lint_auto_find_test_dependencies()
 
   find_package(ament_cmake_clang_format REQUIRED)
+
   ament_clang_format(CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/.clang-format" include src test)
 
-  find_package(ament_cmake_cppcheck REQUIRED)
-  # Check only headers and source files. Some gtest macros such as TEST_F and
-  # TEST_P can produce cppcheck false positives in test sources.
-  ament_cppcheck(include src INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
-  # ament_cppcheck skips cppcheck versions known to be slow unless this
-  # environment variable explicitly allows them.
-  set_tests_properties(cppcheck PROPERTIES ENVIRONMENT "AMENT_CPPCHECK_ALLOW_SLOW_VERSIONS=1")
-
   find_package(ament_cmake_cpplint REQUIRED)
+
   ament_cpplint(
     MAX_LINE_LENGTH
     120
@@ -129,14 +129,24 @@ if(BUILD_TESTING)
     -legal/copyright)
 
   find_package(ament_cmake_flake8 REQUIRED)
+
   ament_flake8(CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ament_flake8.ini")
 
-  find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_cmake_cppcheck REQUIRED)
+
+  # Check only headers and source files.
+  # Some gtest macros such as TEST_F and TEST_P can produce cppcheck false positives in test
+  # sources.
+  ament_cppcheck(include src INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+  # ament_cppcheck skips cppcheck versions known to be slow unless this environment variable
+  # explicitly allows them.
+  set_tests_properties(cppcheck PROPERTIES ENVIRONMENT "AMENT_CPPCHECK_ALLOW_SLOW_VERSIONS=1")
+
   ament_add_gtest(test_transform_math test/test_transform_math.cpp)
   target_include_directories(test_transform_math PRIVATE include)
   ament_target_dependencies(test_transform_math tf2)
 
-  find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(test_launch_contract test/test_launch_contract.py)
 endif()
 

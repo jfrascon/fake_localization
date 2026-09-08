@@ -10,7 +10,7 @@ src = [".", "src"]
 quote-style = "single"
 # Keep classic 4-space indentation.
 indent-style = "space"
-# Disable Black’s 'magic trailing comma' auto-wrapping behaviour.
+# Disable Black's 'magic trailing comma' auto-wrapping behaviour.
 skip-magic-trailing-comma = true
 # Always write LF line endings, regardless of the OS that runs the formatter.
 line-ending = "lf"
@@ -94,10 +94,5 @@ section-order = [
 # Sort imported names alphabetically instead of grouping names by capitalization.
 order-by-type = false
 known-first-party = ["fake_localization"]
-# ROS 2 projects usually contain a top-level 'launch/' directory with launch files.
-# Imports such as `from launch import LaunchDescription` refer to ROS 2's external Python package
-# named `launch`.
-# Mark it as third-party so Ruff/isort does not classify it as first-party just because a local
-# launch/ directory exists.
-known-third-party = ["launch"]
+known-third-party = ["launch", "launch_ros", "ros2_launch_helpers"]
 split-on-trailing-comma = false
